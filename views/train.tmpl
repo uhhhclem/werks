@@ -1,0 +1,29 @@
+<div class="{{loco.kind}}" ng-show="(loco != null)" style="position: relative;">
+	<table ng-controller="LocoCtrl"
+				 class="loco"
+				 style="top:0px; left:0px; ">
+		<tr ng-repeat="row in rows">
+			<td ng-repeat="col in row">
+				<div ng-class="{die: true, dieBox: col.render}">
+						<div style="width: 100%; height: 100%; text-align: center;
+												line-height: 25px; vertical-align: middle;"
+						     ng-show="col.pips > 0">
+							{{col.pips}}
+						</div>
+				</div>
+				<div>
+			</td>
+		</tr>
+	</table>
+	<div class="overlay">
+		<span class="cost">D: {{loco.developmentCost}}</span>
+		<span class="cost">P: {{loco.productionCost}}</span>
+		<span class="cost">I: {{loco.income}}</span>
+	</div>
+	<div class="overlay" style="top: 20px;">
+		<span class="generation">{{generation(loco.generation)}}</span>
+	</div>
+	<div class="overlay" style="top: 20px; text-align: right;">
+		<span class="name">{{loco.name}}</span>
+	</div>
+</div>

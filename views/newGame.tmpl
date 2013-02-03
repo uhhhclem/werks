@@ -1,0 +1,19 @@
+<div>
+	<form name="newGame" ng-submit="startGame()">
+		<div ng-init="p = {3: [0, 1, 2], 4: [0, 1, 2, 3], 5: [0, 1, 2, 3, 4]}">
+			<span>Number of players:</span>
+			<span>3<input required="true" name="players" ng-model="playerCount" value="3" type="radio">
+			<span>4<input required="true" name="players" ng-model="playerCount" value="4" type="radio">
+			<span>5<input required="true" name="players" ng-model="playerCount" value="5" type="radio">
+		</div>
+		<table>
+			<tbody>
+				<tr ng-repeat="index in p[playerCount]">
+					<td>Player {{index + 1}} </td>
+					<td><input ng-model="players[index].name" required="true"></td>
+				</tr>
+			</tbody>
+		</table>
+		<input ng-disabled="!newGame.$valid" type="submit" value="Start game">
+	</form>
+</div>

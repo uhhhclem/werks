@@ -1,0 +1,87 @@
+body, table {
+    font-family: Arial, Helvetica, "Sans Serif";
+    font-size: 10pt;
+}
+
+
+input.ng-invalid {
+	border: 1px solid red;
+}
+
+input.ng-pristine {
+	color: gray;
+	font-style: italic;
+}
+
+table .loco {
+	table-layout: fixed;
+}
+
+table .loco td {
+	width: 25px;
+	text-align: center;
+}
+
+table .loco tr {
+	top: 0px;
+	left: 0px;
+	height: 25px;
+}
+
+div.die {
+	height: 25px;
+	width: 25px;
+	vertical-align: text-bottom;
+	text-align: center;
+}
+
+div.dieBox {
+	border: 1px solid gray;
+}
+
+div.overlay {
+	 position: absolute;
+	 top: 0px; left:0px;
+	 width: 100%;
+	 text-align: center;
+}
+
+span.generation {
+	text-align: center;
+	font-size: 12pt;
+}
+
+span.cost { padding-right: 1em;}
+
+span.name {
+		padding-right: 32px;
+    font-weight: normal;
+    font-size: 7pt;
+}
+
+.passenger { background-color: #D9F5D5;}
+.fast { background-color: #F5D5D6; }
+.freight { background-color: #F4F5D5; }
+.special { background-color: #D5E6F5; }
+
+.player {
+	margin-bottom: 1em;
+}
+
+.current {
+	border: 1px solid blue;
+}
+
+.player .header {
+	font-weight: bold;
+}
+.player input[type=button] {
+	color: blue;
+	padding: 0;
+	border: 1;
+	cursor: pointer;
+	background-color: transparent;
+}
+.player input[type=button]:disabled {
+	color: gray;
+}

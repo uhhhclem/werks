@@ -1,0 +1,11 @@
+<div>
+	<table style="float: left;">
+		<tr ng-repeat="row in rows">
+			<td ng-repeat="loco in row" ng-include="'/views/train.tmpl'">
+			</td>
+		</tr>
+	</table>
+	<div style="float: left;">
+		<div ng-repeat="player in players" ng-include="'/views/player.tmpl'">
+	</div>
+</div>
