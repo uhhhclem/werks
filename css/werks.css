@@ -13,6 +13,17 @@ input.ng-pristine {
 	font-style: italic;
 }
 
+div#messages {
+	position: absolute;
+	top: 136px;
+	left: 228px;
+	width: 215px;
+	height: 490px;
+	font-family: monospace;
+	font-weight: bold;
+	background-color: #f1f1f2;
+}
+
 table .loco {
 	table-layout: fixed;
 }

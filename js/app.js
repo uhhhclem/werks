@@ -10,6 +10,8 @@ werks.factory(
 	'Locos', function($resource) { return $resource('/api/locos')});
 werks.factory(
 	'Players', function($resource) { return $resource('/api/players')});
+werks.factory(
+	'Message', function($resource) { return $resource('/api/message?g=:gameId')})
 
 werks.config(function($routeProvider, $locationProvider) {
 	$routeProvider.when('/board', {
@@ -29,6 +31,8 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc) {
   $scope.$location = $location;
   $scope.$routeParams = $routeParams;
 
+  $scope.messages = [];
+
   $scope.generation= function(gen) {
   	return LocoSvc.getGeneration(gen);
   }
@@ -42,7 +46,6 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 		{name: 'Player 3'},
 		{name: 'Player 4'},
 		{name: 'Player 5'}];
-	$scope.gameId = 1;
 
 	$scope.startGame = function() {
 		// build playerCount, player0, player1... form values
@@ -56,6 +59,7 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 		// post to api/newGame, and on response, load the game data
 		// and switch to the board view.
   	$scope.$parent.game = g.$save(function(data) {
+  		$scope.$parent.gameId = data.id;
   		$scope.$parent.locoData = data.locos;
   		$scope.$parent.players = data.players;
   		$scope.$parent.locos = LocoSvc.buildLocosObject($scope.locoData)
@@ -65,7 +69,19 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 	}
 }
 
-var BoardCtrl = function($scope, Locos, Players) {
+var BoardCtrl = function($scope, $timeout, $http, Message) {
+
+	$timeout(getMessage, 500);
+
+	function getMessage() {
+		Message.get({gameId: $scope.gameId}, function(data) {
+			if (data) {
+				$scope.messages.push(data);
+			}
+			$timeout(getMessage, 500);
+		});
+	}
+
 
 }
 
