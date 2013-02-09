@@ -142,5 +142,29 @@ var FactoryCtrl = function($scope, FactorySvc) {
 	$scope.sell = function() {
 		FactorySvc.sell(false, $scope.factoryServiceInfo);
 	};
+};
 
-}
+// put scrollToBottom on a div using ChatCtrl to have its content
+// scroll to the bottom after a chat message gets added.
+werks.directive('scrollToBottom', function($timeout) {
+    return {
+        link: function(scope, elm, attrs) {
+            var box = elm[0];
+            scope.$watch('chatMessages.length', function() {
+                $timeout(function() {
+                    box.scrollTop = box.scrollHeight;
+                }, 250);
+            }, false);
+        }
+    };
+});
+
+var ChatCtrl = function($scope, $http) {
+    $scope.user = "me";
+    $scope.chat = 'chat';
+    $scope.chatMessages = [];
+
+    $scope.sendChat = function() {
+        $scope.chatMessages.push({user: $scope.user, text: $scope.chat});
+    }
+};

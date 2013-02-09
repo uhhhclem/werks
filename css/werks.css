@@ -4,6 +4,7 @@ body, table {
 }
 
 
+
 input.ng-invalid {
 	border: 1px solid red;
 }
@@ -18,10 +19,22 @@ div#messages {
 	top: 136px;
 	left: 228px;
 	width: 215px;
-	height: 490px;
+	height: 255px;
 	font-family: monospace;
 	font-weight: bold;
-	background-color: #f1f1f2;
+}
+
+#chat {
+	position: absolute;
+	top: 391px;
+	left: 228px;
+	width: 214px;
+	height: 225;
+	font-size: 9pt;
+}
+#chatarea {
+	height: 186px;
+	border: 1px solid black;
 }
 
 table .loco {
