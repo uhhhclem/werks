@@ -12,8 +12,6 @@ werks.factory(
 	'Players', function($resource) { return $resource('/api/players')});
 werks.factory(
 	'Message', function($resource) { return $resource('/api/message?g=:gameId')})
-werks.factory(
-	'Chat', function($resource) { return $resource('/api/chat?g=:gameId&p=:playerId&text=:text')})
 
 werks.config(function($routeProvider, $locationProvider) {
 	$routeProvider.when('/board', {
@@ -191,6 +189,7 @@ var ChatCtrl = function($scope, $http, $timeout, GameSvc) {
     	var text = encodeURIComponent($scope.text);
 			var url = '/api/chat?g=' + gameId + '&p=' + playerId + '&text=' + text;
       $http.post(url);
+      $scope.text = ""
     }
 
 		$timeout($scope.getMessage, 500);

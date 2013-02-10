@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"os"
@@ -113,7 +114,7 @@ func apiChatHandler(w http.ResponseWriter, r *http.Request) {
 		if e == nil {
 			return
 		}
-		m := e.Value.(*ChatMessage)
+		m := e.Value.(ChatMessage)
 		c := ChatMessageJson{Who: m.Player.Name, Text: m.Text}
 		b, err := json.Marshal(c)
 		if err != nil {
@@ -159,7 +160,7 @@ func apiNewGameHandler(w http.ResponseWriter, r *http.Request) {
 		names[i] = r.FormValue(key)
 	}
 
-	g := makeNewGame(names)
+	g := makeNewGame(names, true)
 	gameJson := g.getGameJson()
 	w.Header().Add("content-type", "application/json")
 	fmt.Fprintf(w, "%s", gameJson)
@@ -261,5 +262,12 @@ func Serve() {
 	http.HandleFunc("/api/chat", apiChatHandler)
 
 	// start serving
-	http.ListenAndServe(":8080", nil)
+	http.ListenAndServe(":8080", Log(http.DefaultServeMux))
+}
+
+func Log(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+	})
 }

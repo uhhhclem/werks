@@ -2,10 +2,14 @@ package werks
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"math/rand"
 )
+
+var LocosJsonPath = "../json/locos.json"
 
 // Game represents a single game.
 type Game struct {
@@ -65,7 +69,7 @@ type Die struct {
 }
 
 // makeNewGame creates a new game with the provided player names.
-func makeNewGame(names []string) *Game {
+func makeNewGame(names []string, testMode bool) *Game {
 	LastGameID += 1
 	id := fmt.Sprintf("%d", LastGameID)
 	var g = new(Game)
@@ -75,7 +79,7 @@ func makeNewGame(names []string) *Game {
 	g.addMessage(fmt.Sprintf("Created game %s...", g.ID))
 	g.loadLocos()
 	g.prepareLocos()
-	g.initPlayers(names, true)
+	g.initPlayers(names, testMode)
 	return g
 }
 
@@ -99,12 +103,19 @@ func (g *Game) initPlayers(names []string, testMode bool) {
 	for i, name := range names {
 		id := fmt.Sprintf("%d", i)
 		g.Players[i] = &Player{
-			ID:        id,
-			Name:      name,
-			Factories: f,
-			Money:     m}
+			ID:           id,
+			Name:         name,
+			Factories:    f,
+			Money:        m,
+			ChatMessages: Queue{Capacity: 500}}
 	}
-	g.Players[0].IsCurrent = true
+
+	p := g.Players[0]
+	p.IsCurrent = true
+	if testMode {
+		text := fmt.Sprintf("Test message from %s", p.Name)
+		g.addChatMessage(p, text)
+	}
 }
 
 // rollDie rolls a Die and makes it visible.
@@ -114,10 +125,13 @@ func rollDie() Die {
 
 // loadLocos loads (and unmarshals) Locos from their JSON representation.
 func (g *Game) loadLocos() {
-	path := "../json/locos.json"
+	path := LocosJsonPath
 	result, err := ioutil.ReadFile(path)
 	if err != nil {
-		panic(path + " unreadable.")
+		var pwd string
+		pwd, err = os.Getwd()
+		msg := fmt.Sprintf("reading file (pwd: %s, path: %s) failed", pwd, path)
+		panic(msg)
 	}
 
 	var locos []Loco
@@ -220,9 +234,17 @@ func (g *Game) getMessageJson() []byte {
 	return b
 }
 
-// addMessage adds a new message to the game's queue
+// addMessage adds a new message to the game's queue.
 func (g *Game) addMessage(text string) {
 	g.Messages.PushMessage(text)
+}
+
+// addChatMessage adds a chat message to each player's queue.
+func (g *Game) addChatMessage(player *Player, text string) {
+	c := ChatMessage{Player: player, Text: text}
+	for _, p := range g.Players {
+		p.ChatMessages.Push(c)
+	}
 }
 
 // getMessage gets the next message from the game's queue, or the empty string.
@@ -231,6 +253,25 @@ func (g *Game) getMessage() string {
 		return ""
 	}
 	return g.Messages.PopMessage()
+}
+
+// getChatMessage gets the next chat message from the player's queue, or nil.
+func (g *Game) getChatMessage(player *Player) *ChatMessage {
+	e := player.ChatMessages.Pop()
+	if e == nil {
+		return nil
+	}
+	c := e.Value.(ChatMessage)
+	return &c
+}
+
+// getPlayer returns the player with the specified ID
+func (g *Game) getPlayer(playerId int) (*Player, error) {
+	if playerId < 0 || playerId >= len(g.Players) {
+		return nil, errors.New(
+			fmt.Sprintf("Unknown player ID: %d", playerId))
+	}
+	return g.Players[playerId], nil
 }
 
 var Phases = []string{
