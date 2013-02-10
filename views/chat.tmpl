@@ -4,7 +4,7 @@
          style="overflow-y: scroll">
         <ng-include ng-repeat="message in chatMessages" src="'/views/chatMessage.tmpl'"/>
     </div>
-    <input type="text" ng-model="chat" style="width: 98%"/>
+    <input type="text" ng-model="text" style="width: 98%"/>
     <br/>
     <button ng-click="sendChat()" style="width: 100%;">Send</button>
 </div>

@@ -12,6 +12,8 @@ werks.factory(
 	'Players', function($resource) { return $resource('/api/players')});
 werks.factory(
 	'Message', function($resource) { return $resource('/api/message?g=:gameId')})
+werks.factory(
+	'Chat', function($resource) { return $resource('/api/chat?g=:gameId&p=:playerId&text=:text')})
 
 werks.config(function($routeProvider, $locationProvider) {
 	$routeProvider.when('/board', {
@@ -59,6 +61,7 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 		// post to api/newGame, and on response, load the game data
 		// and switch to the board view.
   	$scope.$parent.game = g.$save(function(data) {
+  		$scope.$parent.game = data;
   		$scope.$parent.gameId = data.id;
   		$scope.$parent.locoData = data.locos;
   		$scope.$parent.players = data.players;
@@ -159,12 +162,37 @@ werks.directive('scrollToBottom', function($timeout) {
     };
 });
 
-var ChatCtrl = function($scope, $http) {
-    $scope.user = "me";
-    $scope.chat = 'chat';
+var ChatCtrl = function($scope, $http, $timeout, GameSvc) {
+    $scope.text = 'chat';
     $scope.chatMessages = [];
 
+		$scope.getMessage = function() {
+			var playerId = GameSvc.getCurrentPlayerId($scope.game);
+			if (playerId == null) {
+				return;
+			}
+			var gameId = $scope.gameId;
+			var url = '/api/chat?g=' + gameId + '&p=' + playerId;
+			$http.get(url).success(function(data) {
+				if (data) {
+					console.log(data)
+					$scope.chatMessages.push(data);
+				}
+				$timeout($scope.getMessage, 1000);
+			});
+		}
+
     $scope.sendChat = function() {
-        $scope.chatMessages.push({user: $scope.user, text: $scope.chat});
+    	var playerId = GameSvc.getCurrentPlayerId($scope.game);
+    	if (playerId == null) {
+    		return;
+    	}
+    	var gameId = $scope.gameId;
+    	var text = encodeURIComponent($scope.text);
+			var url = '/api/chat?g=' + gameId + '&p=' + playerId + '&text=' + text;
+      $http.post(url);
     }
+
+		$timeout($scope.getMessage, 500);
+
 };

@@ -5,38 +5,41 @@ import (
 )
 
 func TestPushMessage(t *testing.T) {
-	q := new(MessageQueue)
+	var text string
+	q := new(Queue)
 	q.Capacity = 5
-	tests := []string {"one", "two", "three", "four", "five"}
+	tests := []string{"one", "two", "three", "four", "five"}
 	for _, test := range tests {
-		if !q.Push(test) {
+		if !q.PushMessage(test) {
 			t.Errorf("Unexpected failure in Push")
 		}
 	}
-	if q.Push("Should be maxed.") {
-		t.Errorf("Push should have failed, and didn't.")
+	if q.PushMessage("Should be maxed.") {
+		t.Errorf("PushMessage should have failed, and didn't.")
 	}
-	if q.Head.Text != "one" {
-		t.Errorf("Head should be one and is %s", q.Head.Text)
+	text = q.Head.Value.(*TextMessage).Text
+	if text != "one" {
+		t.Errorf("Head should be one and is %s", text)
 	}
-	if q.Tail.Text != "five" {
-		t.Errorf("Tail should be five and is %s", q.Tail.Text)
+	text = q.Tail.Value.(*TextMessage).Text
+	if text != "five" {
+		t.Errorf("Tail should be five and is %s", text)
 	}
 }
 
 func TestPopMessage(t *testing.T) {
-	q := new(MessageQueue)
+	q := new(Queue)
 	q.Capacity = 5
-	tests := []string {"one", "two", "three", "four", "five"}
+	tests := []string{"one", "two", "three", "four", "five"}
 	for _, test := range tests {
-		if !q.Push(test) {
-			t.Errorf("Unexpected Push failure.")
+		if !q.PushMessage(test) {
+			t.Errorf("Unexpected PushMessage failure.")
 		}
 	}
 	for _, test := range tests {
-		m := q.Pop()
-		if m.Text != test {
-			t.Errorf("Got %s, expected %s.", m.Text, test)
+		s := q.PopMessage()
+		if s != test {
+			t.Errorf("Got %s, expected %s.", s, test)
 		}
 	}
 	if q.Count != 0 {

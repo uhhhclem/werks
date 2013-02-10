@@ -1,19 +1,20 @@
 package werks
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
-  "net/http"
-  "os"
+	"net/http"
+	"os"
 	"strconv"
-  "time"
+	"time"
 )
 
 var en = errors.New
 
-// getGameFromURL finds the game whose ID is in the URL's query string.
-func getGameFromURL(r *http.Request) (*Game, error) {
+// getGameFromRequest finds the game whose ID is in the URL's query string or form.
+func getGameFromRequest(r *http.Request) (*Game, error) {
 	id := r.FormValue("g")
 	g, ok := Games[id]
 	if !ok {
@@ -22,9 +23,33 @@ func getGameFromURL(r *http.Request) (*Game, error) {
 	return g, nil
 }
 
+// getGameAndPlayerFromRequest finds the game and player from the request
+func getGameAndPlayerFromRequest(r *http.Request) (*Game, *Player, error) {
+	var g *Game
+	var i int
+	var ok bool
+	var err error
+
+	g_id := r.FormValue("g")
+	p_id := r.FormValue("p")
+	g, ok = Games[g_id]
+	if !ok {
+		return nil, nil, err
+	}
+	i, err = strconv.Atoi(p_id)
+	if err != nil {
+		return nil, nil, err
+	}
+	if i < 0 || i > len(g.Players) {
+		err = errors.New("Player ID " + p_id + " out of range.")
+		return nil, nil, err
+	}
+	return g, g.Players[i], nil
+}
+
 // apiGameHandler returns the requested game.
 func apiGameHandler(w http.ResponseWriter, r *http.Request) {
-	g , err := getGameFromURL(r)
+	g, err := getGameFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -36,7 +61,7 @@ func apiGameHandler(w http.ResponseWriter, r *http.Request) {
 
 // apiLocosHandler returns the Locos in the requested game.
 func apiLocosHandler(w http.ResponseWriter, r *http.Request) {
-	g , err := getGameFromURL(r)
+	g, err := getGameFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -48,7 +73,7 @@ func apiLocosHandler(w http.ResponseWriter, r *http.Request) {
 
 // apiPlayersHandler returns the Players in the requested game.
 func apiPlayersHandler(w http.ResponseWriter, r *http.Request) {
-	g , err := getGameFromURL(r)
+	g, err := getGameFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -59,7 +84,7 @@ func apiPlayersHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func apiMessageHandler(w http.ResponseWriter, r *http.Request) {
-	g , err := getGameFromURL(r)
+	g, err := getGameFromRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -72,6 +97,40 @@ func apiMessageHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s", messageJson)
 }
 
+type ChatMessageJson struct {
+	Who  string `json:"who"`
+	Text string `json:"text"`
+}
+
+func apiChatHandler(w http.ResponseWriter, r *http.Request) {
+	g, p, err := getGameAndPlayerFromRequest(r)
+	if err != nil {
+		serveError(w, err)
+		return
+	}
+	if r.Method == "GET" {
+		e := p.ChatMessages.Pop()
+		if e == nil {
+			return
+		}
+		m := e.Value.(*ChatMessage)
+		c := ChatMessageJson{Who: m.Player.Name, Text: m.Text}
+		b, err := json.Marshal(c)
+		if err != nil {
+			panic(err)
+		}
+		w.Header().Add("content-type", "application/json")
+		fmt.Fprintf(w, "%s", b)
+	}
+	if r.Method == "POST" {
+		text := r.FormValue("text")
+		m := ChatMessage{Player: p, Text: text}
+		for _, p := range g.Players {
+			p.ChatMessages.Push(m)
+		}
+	}
+}
+
 // serveError writes an error message.
 func serveError(w http.ResponseWriter, e error) {
 	http.Error(w, e.Error(), http.StatusInternalServerError)
@@ -82,7 +141,7 @@ func apiNewGameHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if r.Method != "POST" {
-		return;
+		return
 	}
 	if err = r.ParseForm(); err != nil {
 		serveError(w, err)
@@ -123,7 +182,7 @@ func apiPlayerActionHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	if r.Method != "POST" {
-		return;
+		return
 	}
 	if err = r.ParseForm(); err != nil {
 		serveError(w, err)
@@ -163,35 +222,33 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	file.Close()
 }
 
-
 // makeTestFactories returns a test slice of Factories.
 func makeTestFactories() []Factory {
 	f := make([]Factory, 3)
-	f[0] = Factory {Key: "p1", Capacity:1 }
-	f[1] = Factory {Key: "a1", Capacity:1 }
-	f[2] = Factory {Key: "p2", Capacity:0 }
+	f[0] = Factory{Key: "p1", Capacity: 1}
+	f[1] = Factory{Key: "a1", Capacity: 1}
+	f[2] = Factory{Key: "p2", Capacity: 0}
 	return f
 }
 
 // makeStandardFactories returns the slice of Factories set up per the rules.
 func makeStandardFactories() []Factory {
 	f := make([]Factory, 1)
-	f[0] = Factory {Key: "p1", Capacity:1 }
+	f[0] = Factory{Key: "p1", Capacity: 1}
 	return f
 }
 
 func initApp() {
-		rand.Seed(time.Now().UnixNano())
+	rand.Seed(time.Now().UnixNano())
 }
-
 
 func Serve() {
 	initApp()
 
 	// register handlers for the static URLs
-	static_dirs := []string { "css", "html", "js", "lib", "views"}
+	static_dirs := []string{"css", "html", "js", "lib", "views"}
 	for _, path := range static_dirs {
-		http.HandleFunc("/" + path + "/", handleContentRequest)
+		http.HandleFunc("/"+path+"/", handleContentRequest)
 	}
 
 	// register handlers for API calls
@@ -201,6 +258,7 @@ func Serve() {
 	http.HandleFunc("/api/game", apiGameHandler)
 	http.HandleFunc("/api/newGame", apiNewGameHandler)
 	http.HandleFunc("/api/message", apiMessageHandler)
+	http.HandleFunc("/api/chat", apiChatHandler)
 
 	// start serving
 	http.ListenAndServe(":8080", nil)

@@ -1,46 +1,63 @@
 package werks
 
-// Message represents a message that needs to be sent to the front
-// end.
-type Message struct {
+// TextMessage represents a simple text message.
+type TextMessage struct {
 	Text string `json:"text"`
-	Next *Message `json:"-"`
 }
 
-// MessageQueue represents a queue of messages that are to be sent to
-// the front end.
-type MessageQueue struct {
-	Head *Message
-	Tail *Message
-	Count int
+// ChatMessage represents a chat message from a player.  It's not
+// JSON serializable.
+type ChatMessage struct {
+	Player *Player
+	Text   string
+}
+
+// Element is an element in a queue.
+type Element struct {
+	Next  *Element
+	Value interface{}
+}
+
+// Queue represents a queue of Elements.
+type Queue struct {
+	Head     *Element
+	Tail     *Element
+	Count    int
 	Capacity int
 }
 
-func (q *MessageQueue) Push(text string) bool {
-	m := new(Message)
+// PushMessage pushes a text message onto the head of the queue.
+func (q *Queue) PushMessage(text string) bool {
+	m := new(TextMessage)
 	m.Text = text
-	m.Next = nil
+	return q.Push(m)
+}
 
+func (q *Queue) Push(value interface{}) bool {
 	if q.Count == q.Capacity {
 		return false
 	}
 
+	e := new(Element)
+	e.Value = value
+	e.Next = nil
+
 	if q.Count <= 0 {
-		q.Head = m
-		q.Tail = m
+		q.Head = e
+		q.Tail = e
 	} else {
-		q.Tail.Next = m
-		q.Tail = m
+		q.Tail.Next = e
+		q.Tail = e
 	}
 	q.Count += 1
 	return true
 }
 
-func (q *MessageQueue) Pop() *Message {
+func (q *Queue) Pop() *Element {
 	if q.Count <= 0 {
 		return nil
 	}
-	m := q.Head
+	e := q.Head
 	if q.Count == 1 {
 		q.Head = nil
 		q.Tail = nil
@@ -48,5 +65,16 @@ func (q *MessageQueue) Pop() *Message {
 		q.Head = q.Head.Next
 	}
 	q.Count -= 1
-	return m
+	return e
+
+}
+
+// PopMessage pops a text message from the tail of the queue.
+func (q *Queue) PopMessage() string {
+	e := q.Pop()
+	if e == nil {
+		return ""
+	}
+
+	return e.Value.(*TextMessage).Text
 }

@@ -1,5 +1,24 @@
 'use strict';
 
+werks.service('GameSvc', function() {
+
+	this.getCurrentPlayerId = function(game) {
+		for (var i=0; i<game.players.length; i++) {
+			var p = game.players[i];
+			if (p.isCurrent) {
+				return i;
+			}
+		}
+		return null;
+	}
+
+	this.getCurrentPlayer = function(game) {
+		var i = this.GetCurrentPlayerId;
+		return (i == null) ? null : game.players[i];
+	}
+
+});
+
 werks.service('LocoSvc', function() {
 
 	// build an object, keyed by loco key, out of the locos array
