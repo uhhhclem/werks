@@ -27,7 +27,7 @@ func getGameFromRequest(r *http.Request) (*Game, error) {
 // getGameAndPlayerFromRequest finds the game and player from the request
 func getGameAndPlayerFromRequest(r *http.Request) (*Game, *Player, error) {
 	var g *Game
-	var i int
+	var p *Player
 	var ok bool
 	var err error
 
@@ -37,15 +37,11 @@ func getGameAndPlayerFromRequest(r *http.Request) (*Game, *Player, error) {
 	if !ok {
 		return nil, nil, err
 	}
-	i, err = strconv.Atoi(p_id)
+	p, err = g.getPlayer(p_id)
 	if err != nil {
 		return nil, nil, err
 	}
-	if i < 0 || i > len(g.Players) {
-		err = errors.New("Player ID " + p_id + " out of range.")
-		return nil, nil, err
-	}
-	return g, g.Players[i], nil
+	return g, p, nil
 }
 
 // apiGameHandler returns the requested game.
@@ -154,13 +150,14 @@ func apiNewGameHandler(w http.ResponseWriter, r *http.Request) {
 		serveError(w, err)
 	}
 
-	names := make([]string, playerCount)
+	name := r.FormValue("name")
+	playerNames := make([]string, playerCount)
 	for i := 0; i < playerCount; i++ {
 		key := fmt.Sprintf("player%d", i)
-		names[i] = r.FormValue(key)
+		playerNames[i] = r.FormValue(key)
 	}
 
-	g := makeNewGame(names, true)
+	g := makeNewGame(name, playerNames, true)
 	gameJson := g.getGameJson()
 	w.Header().Add("content-type", "application/json")
 	fmt.Fprintf(w, "%s", gameJson)

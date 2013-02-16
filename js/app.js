@@ -13,7 +13,7 @@ werks.factory(
 werks.factory(
 	'Message', function($resource) { return $resource('/api/message?g=:gameId')})
 
-werks.config(function($routeProvider, $locationProvider) {
+werks.config(['$routeProvider', function($routeProvider) {
 	$routeProvider.when('/board', {
 		templateUrl: '/views/board.tmpl',
 		controller: BoardCtrl
@@ -22,8 +22,7 @@ werks.config(function($routeProvider, $locationProvider) {
 		templateUrl: '/views/newGame.tmpl',
 		controller: NewGameCtrl
 	});
-	$locationProvider.html5Mode(true);
-});
+}]);
 
 var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc) {
 
@@ -40,6 +39,7 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc) {
 
 var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 	$scope.playerCount = 0;
+	$scope.name = "New game";
 	$scope.players = [
 		{name: 'Player 1'},
 		{name: 'Player 2'},
@@ -50,6 +50,7 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 	$scope.startGame = function() {
 		// build playerCount, player0, player1... form values
 		var g = new NewGame();
+		g.name = $scope.name;
 		for (var i = 0; i < $scope.playerCount; i++) {
 			var key = 'player' + i;
 			g[key] = $scope.players[i].name;
@@ -65,7 +66,7 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
   		$scope.$parent.players = data.players;
   		$scope.$parent.locos = LocoSvc.buildLocosObject($scope.locoData)
   		$scope.$parent.rows = LocoSvc.buildRows($scope.locoData)
-			$location.path('/board');
+			$location.path('board');
   	});
 	}
 }

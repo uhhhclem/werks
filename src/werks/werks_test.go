@@ -47,9 +47,13 @@ func TestPopMessage(t *testing.T) {
 }
 
 func TestInitPlayers(t *testing.T) {
+	name := "test"
 	names := []string{"Abel", "Baker", "Charlie"}
 	LocosJsonPath = "../../json/locos.json"
-	g := makeNewGame(names, true)
+	g := makeNewGame(name, names, true)
+	if g.Name != name {
+		t.Errorf("Game has the wrong name.")
+	}
 	for _, p := range g.Players {
 		t.Logf("Player %s", p.Name)
 		c := g.getChatMessage(p)

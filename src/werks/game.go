@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"math/rand"
+	"uuid"
 )
 
 var LocosJsonPath = "../json/locos.json"
@@ -14,6 +15,7 @@ var LocosJsonPath = "../json/locos.json"
 // Game represents a single game.
 type Game struct {
 	ID           string    `json:"id"`
+	Name string `json:"name"`
 	Players      []*Player `json:"players"`
 	Locos        []*Loco   `json:"locos"`
 	Turn         int       `json:"turn"`
@@ -69,17 +71,20 @@ type Die struct {
 }
 
 // makeNewGame creates a new game with the provided player names.
-func makeNewGame(names []string, testMode bool) *Game {
-	LastGameID += 1
-	id := fmt.Sprintf("%d", LastGameID)
+func makeNewGame(name string, playerNames []string, testMode bool) *Game {
 	var g = new(Game)
+	id, err := uuid.GenUUID()
+	if err != nil {
+		panic(err)
+	}
 	g.ID = id
+	g.Name = name
 	g.Messages.Capacity = 500
 	Games[g.ID] = g
-	g.addMessage(fmt.Sprintf("Created game %s...", g.ID))
+	g.addMessage(fmt.Sprintf("Created game %s...", g.Name))
 	g.loadLocos()
 	g.prepareLocos()
-	g.initPlayers(names, testMode)
+	g.initPlayers(playerNames, testMode)
 	return g
 }
 
@@ -101,7 +106,10 @@ func (g *Game) initPlayers(names []string, testMode bool) {
 	}
 
 	for i, name := range names {
-		id := fmt.Sprintf("%d", i)
+		id, err := uuid.GenUUID()
+		if err != nil {
+			panic(err)
+		}
 		g.Players[i] = &Player{
 			ID:           id,
 			Name:         name,
@@ -266,12 +274,14 @@ func (g *Game) getChatMessage(player *Player) *ChatMessage {
 }
 
 // getPlayer returns the player with the specified ID
-func (g *Game) getPlayer(playerId int) (*Player, error) {
-	if playerId < 0 || playerId >= len(g.Players) {
-		return nil, errors.New(
-			fmt.Sprintf("Unknown player ID: %d", playerId))
+func (g *Game) getPlayer(id string) (*Player, error) {
+	for _, p := range g.Players {
+		if p.ID == id {
+			return p, nil
+		}
 	}
-	return g.Players[playerId], nil
+	return nil, errors.New(
+		fmt.Sprintf("Unknown player ID: %s", id))
 }
 
 var Phases = []string{
@@ -280,5 +290,3 @@ var Phases = []string{
 	"Locomotive Production"}
 
 var Games = make(map[string]*Game)
-
-var LastGameID int
