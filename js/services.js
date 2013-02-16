@@ -2,7 +2,15 @@
 
 werks.service('GameSvc', function() {
 
-	this.getCurrentPlayer = function(game) {
+	this.setGame(game) = function(game) {
+		this._game = game;
+	}
+
+	this.getGameId() = function() {
+		return this._game.id;
+	}
+
+	this.getCurrentPlayer = function() {
 		for (var i=0; i<game.players.length; i++) {
 			var p = game.players[i];
 			if (p.isCurrent) {
@@ -12,7 +20,7 @@ werks.service('GameSvc', function() {
 		return null;
 	}
 
-	this.getCurrentPlayerId = function(game) {
+	this.getCurrentPlayerId = function() {
 		return this.getCurrentPlayer(game).id;
 	}
 

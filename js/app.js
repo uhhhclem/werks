@@ -24,7 +24,7 @@ werks.config(['$routeProvider', function($routeProvider) {
 	});
 }]);
 
-var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc) {
+var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSvc) {
 
 	$scope.$route = $route;
   $scope.$location = $location;
@@ -37,7 +37,7 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc) {
   }
 };
 
-var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
+var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc, GameSvc) {
 	$scope.playerCount = 0;
 	$scope.name = "New game";
 	$scope.players = [
@@ -59,24 +59,22 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc) {
 
 		// post to api/newGame, and on response, load the game data
 		// and switch to the board view.
-  	$scope.$parent.game = g.$save(function(data) {
-  		$scope.$parent.game = data;
-  		$scope.$parent.gameId = data.id;
-  		$scope.$parent.locoData = data.locos;
-  		$scope.$parent.players = data.players;
-  		$scope.$parent.locos = LocoSvc.buildLocosObject($scope.locoData)
-  		$scope.$parent.rows = LocoSvc.buildRows($scope.locoData)
+  	g.$save(function(data) {
+  		GameSvc.setGame(data);
+  		$scope.$parent.locos = LocoSvc.buildLocosObject(data.locoData)
+  		$scope.$parent.rows = LocoSvc.buildRows(data.locoData)
 			$location.path('board');
   	});
 	}
 }
 
-var BoardCtrl = function($scope, $timeout, $http, Message) {
+var BoardCtrl = function($scope, $timeout, $http, Message, GameSvc) {
 
 	$timeout(getMessage, 500);
 
 	function getMessage() {
-		Message.get({gameId: $scope.gameId}, function(data) {
+		var gameId = GameSvc.getGameid();
+		Message.get({gameId: gameId}, function(data) {
 			if (data) {
 				$scope.messages.push(data);
 			}
@@ -166,11 +164,11 @@ var ChatCtrl = function($scope, $http, $timeout, GameSvc) {
     $scope.chatMessages = [];
 
 		$scope.getMessage = function() {
-			var playerId = GameSvc.getCurrentPlayerId($scope.game);
+			var gameId = GameSvc.getGameid();
+			var playerId = GameSvc.getCurrentPlayerId();
 			if (playerId == null) {
 				return;
 			}
-			var gameId = $scope.gameId;
 			var url = '/api/chat?g=' + gameId + '&p=' + playerId;
 			$http.get(url).success(function(data) {
 				if (data) {
@@ -182,7 +180,7 @@ var ChatCtrl = function($scope, $http, $timeout, GameSvc) {
 		}
 
     $scope.sendChat = function() {
-    	var playerId = GameSvc.getCurrentPlayerId($scope.game);
+    	var playerId = GameSvc.getCurrentPlayerId();
     	if (playerId == null) {
     		return;
     	}
