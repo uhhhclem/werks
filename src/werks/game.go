@@ -21,8 +21,9 @@ type Game struct {
 	Turn         int       `json:"turn"`
 	StartPlayer  int       `json:"startPlayer"`
 	ActivePlayer int       `json:"currentPlayer"`
-	Phase        int       `json:"phase"`
+	Phase        Phase     `json:"phase"`
 	Messages     Queue     `json:"-"`
+	LocoMap		   map[string] *Loco 	`json:"-"`
 }
 
 // Player represents one of the players in the game.
@@ -61,6 +62,7 @@ type Loco struct {
 	ExistingOrders    []Die  `json:"existingOrders"`
 	InitialOrders     Die    `json:"initialOrders"`
 	CustomerBase      []Die  `json:"customerBase"`
+	Obsolete					bool	 `json:"obsolete"`
 }
 
 // Die represents a slot where a die can be placed, and the die itself.
@@ -68,6 +70,59 @@ type Loco struct {
 type Die struct {
 	Pips   int  `json:"pips"`
 	Render bool `json:"render"`
+}
+
+// Phase identifies which phase is currently being executed.
+type Phase int
+
+const (
+	Development Phase = iota + 1
+	Capacity
+	Production
+)
+
+// Action represents an action that is available to the active player.
+type Action struct {
+	Abbr	string	`json:"abbr"`
+	Text 	string 	`json:"text"`
+}
+
+// getActions returns the actions that are available to the current
+// user right now.
+func (g *Game) getActions() []Action {
+	result := make([]Action, 10)
+
+	if g.Phase == Development {
+		for _, loco := range g.Locos {
+			if g.isLocoAvailableForDevelopment(loco) {
+				abbr := fmt.Sprintf("D:%s", loco.Key)
+				text := fmt.Sprintf("Develop %s for %d", loco.Name, loco.DevelopmentCost)
+				result = append(result, Action{Abbr:abbr, Text:text})
+			}
+		}
+	}
+
+	// I think you can always pass.
+	result = append(result, Action{Abbr:"P", Text:"Pass"})
+	return result
+}
+
+// isLocoAvailableForDevelopment indicates if a given Loco is
+// obsolete, has an Initial Orders die, or has at least one
+// Existing Orders die.
+func (g *Game) isLocoAvailableForDevelopment(loco *Loco) bool {
+	if loco.Obsolete {
+		return false
+	}
+	if loco.InitialOrders.Render {
+		return true
+	}
+	for _, d := range loco.ExistingOrders {
+		if d.Render {
+			return true
+		}
+	}
+	return false
 }
 
 // makeNewGame creates a new game with the provided player names.
@@ -145,8 +200,10 @@ func (g *Game) loadLocos() {
 	var locos []Loco
 	err = json.Unmarshal(result, &locos)
 	g.Locos = make([]*Loco, len(locos))
+	g.LocoMap = make(map[string] *Loco)
 	for i, _ := range locos {
 		g.Locos[i] = &locos[i]
+		g.LocoMap[g.Locos[i].Key] = g.Locos[i]
 	}
 	if err != nil {
 		panic(err)

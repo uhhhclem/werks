@@ -1,7 +1,7 @@
 <div ng-controller="ChatCtrl" >
     <div id="chatarea"
          scroll-to-bottom=""
-         style="overflow-y: scroll">
+         style="overflow-y: scroll;">
         <ng-include ng-repeat="message in chatMessages" src="'/views/chatMessage.tmpl'"/>
     </div>
     <input type="text" ng-model="text" style="width: 98%"/>

@@ -13,34 +13,12 @@
 			<tr>
 				<th>Locomotive type</th>
 				<th>Capacity</th>
-				<th/>
-				<th/>
-				<th>Sold</th>
 			</tr>
 			<tr ng-repeat="factory in player.factories"
 					ng-controller="FactoryCtrl"
 					class="{{loco.kind}}">
 				<td>{{loco.name}} ({{generation(loco.generation)}})</td>
 				<td style="text-align: right;">{{factory.capacity}}</td>
-				<td>
-					<input type="button"
-								 ng-disabled="expandDisabled() || !player.isCurrent"
-								 ng-click="expand()"
-								 value="expand"/>
-				</td>
-				<td>
-					<input type="button"
-								 ng-disabled="upgradeDisabled() || !player.isCurrent"
-								 ng-click="upgrade()"
-								 value="upgrade"/>
-				</td>
-				<td style="text-align: right;">{{factory.unitsSold}}</td>
-				<td>
-					<input type="button"
-								 ng-disabled="sellDisabled() || !player.isCurrent"
-								 ng-click="sell()"
-								 value="sell"/>
-				</td>
 			</tr>
 		</table>
 	</div>
