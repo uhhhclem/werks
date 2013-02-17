@@ -154,27 +154,29 @@ func apiNewGameHandler(w http.ResponseWriter, r *http.Request) {
 		playerNames[i] = r.FormValue(key)
 	}
 
-	g := makeNewGame(name, playerNames, true)
+	g := makeNewGame(name, playerNames)
 	gameJson := g.getGameJson()
 	w.Header().Add("content-type", "application/json")
 	fmt.Fprintf(w, "%s", gameJson)
 }
 
-/*
-The possible player actions (and the phase they can occur in):
-
-Phase  Action
------  ------
-  1    Develop locomotive %key.
-  1    Pass.
-  2    Buy %amt capacity on factory %key.
-  2    Upgrade %amt capacity from factory %key.
-  2    Pass.
-  3    Sell from factory %key.
-  3    Pass.
-*/
-func apiPlayerActionHandler(w http.ResponseWriter, r *http.Request) {
+func apiActionHandler(w http.ResponseWriter, r *http.Request) {
+	var g *Game
+	var p *Player
 	var err error
+
+	g, p, err = getGameAndPlayerFromRequest(r)
+	if err != nil {
+		serveError(w, err)
+	}
+	if r.Method == "GET" {
+		if !p.IsCurrent {
+			return
+		}
+		actionsJson := g.getActionsJson()
+		w.Header().Add("content-type", "application/json")
+		fmt.Fprintf(w, "%s", actionsJson)
+	}
 
 	if r.Method != "POST" {
 		return
@@ -184,11 +186,9 @@ func apiPlayerActionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	action := r.FormValue("action")
-	key := r.FormValue("key")
-	amt := r.FormValue("amt")
+	abbr := r.FormValue("abbr")
 
-	fmt.Printf("%s %s %s", action, key, amt)
+	fmt.Printf("%s", abbr)
 }
 
 // handleContentRequest handles most HTTP GET requests for static resources.
@@ -217,22 +217,6 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	file.Close()
 }
 
-// makeTestFactories returns a test slice of Factories.
-func makeTestFactories() []Factory {
-	f := make([]Factory, 3)
-	f[0] = Factory{Key: "p1", Capacity: 1}
-	f[1] = Factory{Key: "a1", Capacity: 1}
-	f[2] = Factory{Key: "p2", Capacity: 0}
-	return f
-}
-
-// makeStandardFactories returns the slice of Factories set up per the rules.
-func makeStandardFactories() []Factory {
-	f := make([]Factory, 1)
-	f[0] = Factory{Key: "p1", Capacity: 1}
-	return f
-}
-
 func initApp() {
 	rand.Seed(time.Now().UnixNano())
 }
@@ -254,6 +238,7 @@ func Serve() {
 	http.HandleFunc("/api/newGame", apiNewGameHandler)
 	http.HandleFunc("/api/message", apiMessageHandler)
 	http.HandleFunc("/api/chat", apiChatHandler)
+	http.HandleFunc("/api/action", apiActionHandler)
 
 	// start serving
 	http.ListenAndServe(":8080", Log(http.DefaultServeMux))

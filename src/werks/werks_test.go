@@ -46,14 +46,20 @@ func TestPopMessage(t *testing.T) {
 	}
 }
 
-func TestInitPlayers(t *testing.T) {
+func newGame() *Game {
 	name := "test"
 	names := []string{"Abel", "Baker", "Charlie"}
 	LocosJsonPath = "../../json/locos.json"
-	g := makeNewGame(name, names, true)
-	if g.Name != name {
+	g := makeNewGame(name, names)
+	return g
+}
+
+func TestAddChatMessage(t *testing.T) {
+	g := newGame()
+	if g.Name != "test" {
 		t.Errorf("Game has the wrong name.")
 	}
+	g.addChatMessage(g.Players[0], "test message")
 	for _, p := range g.Players {
 		t.Logf("Player %s", p.Name)
 		c := g.getChatMessage(p)
@@ -63,6 +69,48 @@ func TestInitPlayers(t *testing.T) {
 		c = g.getChatMessage(p)
 		if c != nil {
 			t.Errorf("Should have received only one chat message.")
+		}
+	}
+}
+
+func TestIsLocoAvailableForDevelopment(t *testing.T) {
+	g := newGame()
+	// at start of the game, only a1 is available.
+	for _, loco := range g.Locos {
+		avail := g.isLocoAvailableForDevelopment(loco)
+		if avail {
+			if loco.Key != "a1" {
+				t.Errorf("%s.InitialOrders.Render = %s", loco.Key, loco.InitialOrders.Render)
+				t.Errorf("%s is available and shouldn't be", loco.Key)
+			}
+		} else {
+			if loco.Key == "a1" {
+				t.Errorf("%s isn't available and should be", loco.Key)
+			}
+		}
+	}
+}
+
+func TestGetActions(t *testing.T) {
+	g := newGame()
+	if g.Phase != Development {
+		t.Errorf("Game should start in the development phase.")
+	}
+	a := g.getActions()
+	if a.Phase != "Locomotive Development" {
+		t.Errorf("Game should start in the development phase.")
+		return
+	}
+	actions := a.Actions
+	expectedAbbrs := []string{"D:a1", "P"}
+	if len(actions) != len(expectedAbbrs) {
+		t.Errorf("There should be exactly %d actions at start.", len(expectedAbbrs))
+		return
+	}
+	for i, expected := range(expectedAbbrs) {
+		actual := actions[i].Abbr
+		if expected != actual {
+			t.Errorf("Expected %s, got %s", expected, actual)
 		}
 	}
 }

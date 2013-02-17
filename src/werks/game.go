@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"math/rand"
+	"os"
 	"uuid"
 )
 
@@ -14,16 +14,16 @@ var LocosJsonPath = "../json/locos.json"
 
 // Game represents a single game.
 type Game struct {
-	ID           string    `json:"id"`
-	Name string `json:"name"`
-	Players      []*Player `json:"players"`
-	Locos        []*Loco   `json:"locos"`
-	Turn         int       `json:"turn"`
-	StartPlayer  int       `json:"startPlayer"`
-	ActivePlayer int       `json:"currentPlayer"`
-	Phase        Phase     `json:"phase"`
-	Messages     Queue     `json:"-"`
-	LocoMap		   map[string] *Loco 	`json:"-"`
+	ID           string           `json:"id"`
+	Name         string           `json:"name"`
+	Players      []*Player        `json:"players"`
+	Locos        []*Loco          `json:"locos"`
+	Turn         int              `json:"turn"`
+	StartPlayer  int              `json:"startPlayer"`
+	ActivePlayer int              `json:"currentPlayer"`
+	Phase        Phase            `json:"phase"`
+	Messages     Queue            `json:"-"`
+	LocoMap      map[string]*Loco `json:"-"`
 }
 
 // Player represents one of the players in the game.
@@ -62,11 +62,12 @@ type Loco struct {
 	ExistingOrders    []Die  `json:"existingOrders"`
 	InitialOrders     Die    `json:"initialOrders"`
 	CustomerBase      []Die  `json:"customerBase"`
-	Obsolete					bool	 `json:"obsolete"`
+	Obsolete          bool   `json:"obsolete"`
 }
 
 // Die represents a slot where a die can be placed, and the die itself.
-// If Render is false, no space will be rendered in the UI.
+// If Render is false, no space will be rendered in the UI.  If Pips is
+// 0, the die has no value.
 type Die struct {
 	Pips   int  `json:"pips"`
 	Render bool `json:"render"`
@@ -81,30 +82,49 @@ const (
 	Production
 )
 
-// Action represents an action that is available to the active player.
+var Phases = []string{
+	"Locomotive Development",
+	"Production Capacity",
+	"Locomotive Production"}
+
+// Actions represents the actions that are available to the
+// current player.
+type Actions struct {
+	Phase string `json:"phase"`
+	Actions []Action `json:"actions"`
+}
+
+// Action represents one action that is available to the active player.
 type Action struct {
-	Abbr	string	`json:"abbr"`
-	Text 	string 	`json:"text"`
+	Abbr string `json:"abbr"`
+	Verb string `json:"verb"`
+	Noun string `json:"noun"`
+	Cost int `json:"cost"`
 }
 
 // getActions returns the actions that are available to the current
 // user right now.
-func (g *Game) getActions() []Action {
-	result := make([]Action, 10)
+func (g *Game) getActions() *Actions {
+
+	actions := make([]Action, 0)
 
 	if g.Phase == Development {
 		for _, loco := range g.Locos {
 			if g.isLocoAvailableForDevelopment(loco) {
 				abbr := fmt.Sprintf("D:%s", loco.Key)
-				text := fmt.Sprintf("Develop %s for %d", loco.Name, loco.DevelopmentCost)
-				result = append(result, Action{Abbr:abbr, Text:text})
+				actions = append(actions, Action{
+					Abbr: abbr,
+					Verb: "Develop",
+					Noun: loco.Name,
+					Cost: loco.DevelopmentCost})
 			}
 		}
 	}
 
 	// I think you can always pass.
-	result = append(result, Action{Abbr:"P", Text:"Pass"})
-	return result
+	actions = append(actions, Action{Abbr: "P", Verb: "Pass"})
+	phase := Phases[g.Phase - 1]
+	return &Actions{Phase: phase, Actions: actions}
 }
 
 // isLocoAvailableForDevelopment indicates if a given Loco is
@@ -114,19 +134,30 @@ func (g *Game) isLocoAvailableForDevelopment(loco *Loco) bool {
 	if loco.Obsolete {
 		return false
 	}
-	if loco.InitialOrders.Render {
-		return true
-	}
+	// if there's no initial order or existing order, loco can't
+	// be developed.
+	hasPips := loco.InitialOrders.Pips != 0
 	for _, d := range loco.ExistingOrders {
-		if d.Render {
-			return true
+		hasPips = hasPips || d.Pips != 0
+	}
+	if !hasPips {
+		return false
+	}
+	// from here on, we can develop the loco unless the player can't.
+	p := g.getCurrentPlayer()
+	if loco.DevelopmentCost > p.Money {
+		return false
+	}
+	for _, f := range p.Factories {
+		if f.Key == loco.Key {
+			return false
 		}
 	}
-	return false
+	return true
 }
 
 // makeNewGame creates a new game with the provided player names.
-func makeNewGame(name string, playerNames []string, testMode bool) *Game {
+func makeNewGame(name string, playerNames []string) *Game {
 	var g = new(Game)
 	id, err := uuid.GenUUID()
 	if err != nil {
@@ -135,50 +166,51 @@ func makeNewGame(name string, playerNames []string, testMode bool) *Game {
 	g.ID = id
 	g.Name = name
 	g.Messages.Capacity = 500
+	g.Phase = Development
 	Games[g.ID] = g
 	g.addMessage(fmt.Sprintf("Created game %s...", g.Name))
 	g.loadLocos()
 	g.prepareLocos()
-	g.initPlayers(playerNames, testMode)
+	g.initPlayers(playerNames)
 	return g
 }
 
+
 // initPlayers sets up the Players array with initial values.
-func (g *Game) initPlayers(names []string, testMode bool) {
+func (g *Game) initPlayers(names []string) {
 	g.addMessage("Initializing players...")
-	var f []Factory
-	var m int
 
 	g.Players = make([]*Player, len(names))
-
-	if testMode {
-		g.addMessage("Running in test mode...")
-		f = makeTestFactories()
-		m = 30
-	} else {
-		f = makeStandardFactories()
-		m = 12
-	}
 
 	for i, name := range names {
 		id, err := uuid.GenUUID()
 		if err != nil {
 			panic(err)
 		}
-		g.Players[i] = &Player{
+		p := &Player{
 			ID:           id,
 			Name:         name,
-			Factories:    f,
-			Money:        m,
+			Factories:    make([]Factory, 1),
+			Money:        12,
 			ChatMessages: Queue{Capacity: 500}}
+
+		p.Factories[0] = Factory{Key: "p1", Capacity: 1}
+
+		g.Players[i] = p
 	}
 
 	p := g.Players[0]
 	p.IsCurrent = true
-	if testMode {
-		text := fmt.Sprintf("Test message from %s", p.Name)
-		g.addChatMessage(p, text)
+}
+
+// getCurrentPlayer returns the current player.
+func (g *Game) getCurrentPlayer() *Player {
+	for _, p := range g.Players {
+		if p.IsCurrent {
+			return p
+		}
 	}
+	panic("No current player!")
 }
 
 // rollDie rolls a Die and makes it visible.
@@ -200,7 +232,7 @@ func (g *Game) loadLocos() {
 	var locos []Loco
 	err = json.Unmarshal(result, &locos)
 	g.Locos = make([]*Loco, len(locos))
-	g.LocoMap = make(map[string] *Loco)
+	g.LocoMap = make(map[string]*Loco)
 	for i, _ := range locos {
 		g.Locos[i] = &locos[i]
 		g.LocoMap[g.Locos[i].Key] = g.Locos[i]
@@ -223,13 +255,13 @@ func (g *Game) prepareLocos() {
 	for i, loco := range g.Locos {
 		key := fmt.Sprintf("%s%d", prefixes[loco.Kind], loco.Generation)
 		g.Locos[i].Key = key
+		g.Locos[i].InitialOrders.Render = true
 		g.Locos[i].ExistingOrders = make([]Die, 5)
 		g.Locos[i].CustomerBase = make([]Die, 5)
 		for j := 0; j < 5; j++ {
 			g.Locos[i].ExistingOrders[j] = Die{Render: j < loco.MaxExistingOrders}
 			g.Locos[i].CustomerBase[j] = Die{Render: j < loco.MaxCustomerBase}
 		}
-		g.Locos[i].InitialOrders = Die{Render: true}
 		nextLoco := g.findUpgrade(loco)
 		if nextLoco != nil {
 			key = fmt.Sprintf("%s%d", prefixes[loco.Kind], loco.Generation+1)
@@ -252,6 +284,16 @@ func (g *Game) findUpgrade(oldLoco *Loco) *Loco {
 		}
 	}
 	return nil
+}
+
+// getActionsJson marshals the available actions into a JSON byte slice.
+func (g *Game) getActionsJson() []byte {
+	actions := g.getActions()
+	b, err := json.Marshal(actions)
+	if err != nil {
+		panic(err)
+	}
+	return b
 }
 
 // getGameJson marshals the Game into a JSON byte slice.
@@ -332,10 +374,10 @@ func (g *Game) getChatMessage(player *Player) *ChatMessage {
 
 // pushChatMessage pushes a message from a player into all players' queues.
 func (g *Game) pushChatMessage(player *Player, text string) {
-		m := ChatMessage{Player: player, Text: text}
-		for _, p := range g.Players {
-			p.ChatMessages.Push(m)
-		}
+	m := ChatMessage{Player: player, Text: text}
+	for _, p := range g.Players {
+		p.ChatMessages.Push(m)
+	}
 }
 
 // getPlayer returns the player with the specified ID
@@ -348,10 +390,5 @@ func (g *Game) getPlayer(id string) (*Player, error) {
 	return nil, errors.New(
 		fmt.Sprintf("Unknown player ID: %s", id))
 }
-
-var Phases = []string{
-	"Locomotive Development",
-	"Production Capacity",
-	"Locomotive Production"}
 
 var Games = make(map[string]*Game)
