@@ -6,7 +6,7 @@
 		</tr>
 	</table>
 	<div style="float: left;">
-		<div ng-repeat="player in players" ng-include="'/views/player.tmpl'">
+		<div ng-repeat="player in getPlayers()" ng-include="'/views/player.tmpl'">
 	</div>
 	<div id="messages">
 		<div ng-repeat="message in messages">

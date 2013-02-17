@@ -273,6 +273,14 @@ func (g *Game) getChatMessage(player *Player) *ChatMessage {
 	return &c
 }
 
+// pushChatMessage pushes a message from a player into all players' queues.
+func (g *Game) pushChatMessage(player *Player, text string) {
+		m := ChatMessage{Player: player, Text: text}
+		for _, p := range g.Players {
+			p.ChatMessages.Push(m)
+		}
+}
+
 // getPlayer returns the player with the specified ID
 func (g *Game) getPlayer(id string) (*Player, error) {
 	for _, p := range g.Players {

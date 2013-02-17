@@ -2,15 +2,16 @@
 
 werks.service('GameSvc', function() {
 
-	this.setGame(game) = function(game) {
+	this.setGame = function(game) {
 		this._game = game;
 	}
 
-	this.getGameId() = function() {
+	this.getGameId = function() {
 		return this._game.id;
 	}
 
 	this.getCurrentPlayer = function() {
+		var game = this._game;
 		for (var i=0; i<game.players.length; i++) {
 			var p = game.players[i];
 			if (p.isCurrent) {
@@ -20,8 +21,12 @@ werks.service('GameSvc', function() {
 		return null;
 	}
 
+	this.getPlayers = function() {
+		return this._game.players;
+	}
+
 	this.getCurrentPlayerId = function() {
-		return this.getCurrentPlayer(game).id;
+		return this.getCurrentPlayer().id;
 	}
 
 });

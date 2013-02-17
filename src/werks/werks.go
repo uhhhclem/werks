@@ -35,7 +35,7 @@ func getGameAndPlayerFromRequest(r *http.Request) (*Game, *Player, error) {
 	p_id := r.FormValue("p")
 	g, ok = Games[g_id]
 	if !ok {
-		return nil, nil, err
+		return nil, nil, errors.New("Unrecognized game ID.")
 	}
 	p, err = g.getPlayer(p_id)
 	if err != nil {
@@ -121,10 +121,7 @@ func apiChatHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.Method == "POST" {
 		text := r.FormValue("text")
-		m := ChatMessage{Player: p, Text: text}
-		for _, p := range g.Players {
-			p.ChatMessages.Push(m)
-		}
+		g.pushChatMessage(p, text)
 	}
 }
 
