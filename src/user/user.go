@@ -13,6 +13,9 @@ import (
 	"uuid"
 )
 
+var InvalidNicknameError = errors.New("Invalid nickname.")
+var InvalidPasswordError = errors.New("Invalid password.")
+
 var passwordSalt string
 var userFilename string
 var users []*User
@@ -52,7 +55,7 @@ func New(nickname string, password string) (*User, error) {
 	u := &User {
 		Id: id,
 		Nickname: nickname,
-		Pwhash: hashPassword(password)}
+		Pwhash: hashPassword(canonicalizePassword(password))}
 
 	key := canonicalizeNickname(u.Nickname)
 	if usersByNickname[key] != nil {
@@ -63,6 +66,18 @@ func New(nickname string, password string) (*User, error) {
 	usersByNickname[key] = u
 	usersById[u.Id] = u
 
+	return u, nil
+}
+
+// Login validates a user login and returns the User.
+func Login(nickname, password string) (*User, error) {
+	u := LookupByNickname(nickname)
+	if u == nil {
+		return nil, InvalidNicknameError
+	}
+	if u.Pwhash != hashPassword(canonicalizePassword(password)) {
+		return nil, InvalidPasswordError
+	}
 	return u, nil
 }
 
@@ -82,6 +97,13 @@ func canonicalizeNickname(nickname string) string {
 	re := regexp.MustCompile("[^A-Za-z0-9]*")
 	s := re.ReplaceAllLiteralString(nickname, "")
 	return strings.ToLower(s)
+}
+
+// canonicalizePassword strips whitespace from the password.
+func canonicalizePassword(password string) string {
+	re := regexp.MustCompile("[\\s]*")
+	s := re.ReplaceAllLiteralString(password, "")
+	return s
 }
 
 // hashPassword salts and hashes a password.
