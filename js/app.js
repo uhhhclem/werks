@@ -3,6 +3,9 @@
 var werks = angular.module('werks', ['ngResource', 'httpFix']);
 
 werks.factory(
+	'Action', function($resource) {return $resource(
+				'/api/action')});
+werks.factory(
 	'NewGame', function($resource) { return $resource('/api/newGame')});
 werks.factory(
 	'Game', function($resource) { return $resource('/api/game')});
@@ -24,7 +27,7 @@ werks.config(['$routeProvider', function($routeProvider) {
 	});
 }]);
 
-var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSvc) {
+var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSvc, Action) {
 
 	$scope.$route = $route;
   $scope.$location = $location;
@@ -38,6 +41,16 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
 
   $scope.generation = function(gen) {
   	return LocoSvc.getGeneration(gen);
+  }
+
+  $scope.getActions = function() {
+  	var g = GameSvc.getGameId();
+  	var p = GameSvc.getCurrentPlayerId();
+  	var a = new Action();
+  	a.$get({g: g, p: p}, function(data) {
+  		$scope.currentPlayer = GameSvc.getCurrentPlayer();
+  		$scope.actions = data;
+  	})
   }
 };
 
@@ -198,5 +211,31 @@ var ChatCtrl = function($scope, $http, $timeout, GameSvc) {
     }
 
 		$timeout($scope.getMessage, 500);
+
+};
+
+var ActionCtrl = function($scope, GameSvc) {
+
+	$scope.player = GameSvc.getCurrentPlayer();
+
+	var arr = $scope.a.abbr.split(":");
+	$scope.actionType = arr[0];
+	if (arr.length > 1) {
+		$scope.locoKey = arr[1];
+		var loco = GameSvc.getLoco($scope.locoKey);
+		$scope.locoKind = loco.kind;
+	} else {
+		$scope.locoKey = null;
+		$scope.locoType = null;
+	}
+
+	$scope.pass = function() {
+		console.log("pass");
+	}
+
+	$scope.develop = function() {
+		console.log("develop");
+		console.log($scope.a);
+	}
 
 };

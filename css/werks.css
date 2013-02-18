@@ -3,7 +3,25 @@ body, table {
     font-size: 10pt;
 }
 
+div.actions {
+	font-family: consolas, inconsolata, monospace, courier;
+}
+div.newAction {
+}
+div.phase {
+	display: inline-block;
+	font-weight: bold;
+}
+div.action {
+	display: inline-block;
+	margin-left: 1em;
+}
 
+div.action a {
+	padding: 2px;
+	text-decoration: none;
+	color: black;
+}
 
 input.ng-invalid {
 	border: 1px solid red;

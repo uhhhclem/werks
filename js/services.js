@@ -29,6 +29,15 @@ werks.service('GameSvc', function() {
 		return this.getCurrentPlayer().id;
 	}
 
+	this.getLoco = function(key) {
+		for (var i=0; i<this._game.locos.length; i++) {
+			var loco = this._game.locos[i];
+			if (loco.key == key) {
+				return loco;
+			}
+		}
+	}
+
 });
 
 werks.service('LocoSvc', function() {

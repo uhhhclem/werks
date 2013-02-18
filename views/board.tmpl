@@ -1,13 +1,30 @@
 <div>
-	<table style="float: left;">
+	<table style="display: inline-block; vertical-align: top;">
 		<tr ng-repeat="row in rows">
 			<td ng-repeat="loco in row" ng-include="'/views/train.tmpl'">
 			</td>
 		</tr>
 	</table>
-	<div style="float: left;">
-		<div ng-repeat="player in getPlayers()" ng-include="'/views/player.tmpl'">
+
+	<div style="display: inline-block; vertical-align: top;">
+		<div ng-repeat="player in getPlayers()" ng-include="'/views/player.tmpl'"></div>
+		<div class="actions">
+			<div>
+				<button ng-click="getActions()" name="getActions">Get actions</button>
+			</div>
+			<div class="newAction">
+				<div class="phase">
+					<span>{{currentPlayer.name}}: </span>
+					<span>{{actions.phase}} > </span>
+				</div>
+				<div ng-repeat="a in actions.actions"
+						 ng-include="'/views/action.tmpl'"
+						 ng-controller="ActionCtrl">
+				</div>
+			</div>
+		</div>
 	</div>
+
 	<div id="messages">
 		<div ng-repeat="message in messages">
 			{{message.text}}

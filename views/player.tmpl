@@ -1,5 +1,5 @@
 <div class="player">
-	<div style="float: left;"
+	<div style="display: inline-block;"
 			 ng-class="{current: player.isCurrent}">
 		<div class="header">
 			<div style="float: left;">
@@ -22,5 +22,7 @@
 			</tr>
 		</table>
 	</div>
-	<button ng-show="player.isCurrent" style="float:right;">Done</button>
+
+	<button ng-show="player.isCurrent" style="display:inline-block; vertical-align: top;">Done</button>
+
 </div>
