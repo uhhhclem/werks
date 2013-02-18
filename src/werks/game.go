@@ -1,10 +1,12 @@
 package werks
 
 import (
+	"container/heap"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/rand"
 	"os"
 	"uuid"
@@ -24,6 +26,8 @@ type Game struct {
 	Phase        Phase            `json:"phase"`
 	Messages     Queue            `json:"-"`
 	LocoMap      map[string]*Loco `json:"-"`
+	TurnOrder	 	 PlayerQueue 			`json:"-"`
+	PhaseOrder	 PlayerQueue 			`json:"-"`
 }
 
 // Player represents one of the players in the game.
@@ -33,6 +37,7 @@ type Player struct {
 	Money        int       `json:"money"`
 	Factories    []Factory `json:"factories"`
 	IsCurrent    bool      `json:"isCurrent"`
+	TurnOrder    int       `json:"turnOrder"`
 	ChatMessages Queue     `json:"-"`
 }
 
@@ -100,6 +105,14 @@ type Action struct {
 	Verb string `json:"verb"`
 	Noun string `json:"noun"`
 	Cost int `json:"cost"`
+}
+
+func (g *Game) performAction(abbr string) {
+	log.Printf("performAction: %s", abbr)
+
+	if abbr == "P" {
+
+	}
 }
 
 // getActions returns the actions that are available to the current
@@ -172,9 +185,50 @@ func makeNewGame(name string, playerNames []string) *Game {
 	g.loadLocos()
 	g.prepareLocos()
 	g.initPlayers(playerNames)
+	g.determineTurnOrder()
+
 	return g
 }
 
+
+// getNextPlayer returns the next player.  If wrap is false, each player
+// gets one turn, and this returns nil when all players have had a turn.
+// If wrap is true, this will keep returning the next player in order
+// indefinitely.
+func (g *Game) getNextPlayer(wrap bool) *Player {
+	if len(g.PhaseOrder) == 0 {
+		if !wrap {
+			return nil
+		}
+		g.PhaseOrder = make(PlayerQueue, len(g.Players))
+		copy(g.PhaseOrder, g.TurnOrder)
+	}
+	pi := heap.Pop(&g.PhaseOrder).(*PlayerInfo)
+	return pi.player
+}
+
+// determineTurnOrder initializes the TurnOrder priority
+// queue, ordering players by money and previous turn
+// order.  It also initializes the PhaseOrder queue.
+func (g *Game) determineTurnOrder() {
+	g.TurnOrder = make(PlayerQueue, 0, len(g.Players))
+	for i, _ := range g.Players {
+		pi := &PlayerInfo{player: g.Players[i], turnOrder: i}
+		heap.Push(&g.TurnOrder, pi)
+	}
+	g.PhaseOrder = make(PlayerQueue, len(g.Players))
+	copy(g.PhaseOrder, g.TurnOrder)
+
+	// we have to copy the queue and pop everything out of
+	// it to assign turn order to the players.
+	var to = make(PlayerQueue, len(g.Players))
+	copy(to, g.TurnOrder)
+
+	for i, _ := range g.Players {
+		pi := heap.Pop(&to).(*PlayerInfo)
+		pi.player.TurnOrder = i
+	}
+}
 
 // initPlayers sets up the Players array with initial values.
 func (g *Game) initPlayers(names []string) {
@@ -192,7 +246,8 @@ func (g *Game) initPlayers(names []string) {
 			Name:         name,
 			Factories:    make([]Factory, 1),
 			Money:        12,
-			ChatMessages: Queue{Capacity: 500}}
+			ChatMessages: Queue{Capacity: 500},
+			TurnOrder: 	  i}
 
 		p.Factories[0] = Factory{Key: "p1", Capacity: 1}
 

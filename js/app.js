@@ -44,10 +44,8 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
   }
 
   $scope.getActions = function() {
-  	var g = GameSvc.getGameId();
-  	var p = GameSvc.getCurrentPlayerId();
   	var a = new Action();
-  	a.$get({g: g, p: p}, function(data) {
+  	a.$get(GameSvc.urlParams(), function(data) {
   		$scope.currentPlayer = GameSvc.getCurrentPlayer();
   		$scope.actions = data;
   	})
@@ -214,7 +212,7 @@ var ChatCtrl = function($scope, $http, $timeout, GameSvc) {
 
 };
 
-var ActionCtrl = function($scope, GameSvc) {
+var ActionCtrl = function($scope, GameSvc, Action) {
 
 	$scope.player = GameSvc.getCurrentPlayer();
 
@@ -229,13 +227,12 @@ var ActionCtrl = function($scope, GameSvc) {
 		$scope.locoType = null;
 	}
 
-	$scope.pass = function() {
-		console.log("pass");
-	}
-
-	$scope.develop = function() {
-		console.log("develop");
-		console.log($scope.a);
+	$scope.doAction = function() {
+		var a = new Action();
+		a.abbr = $scope.a.abbr;
+		a.$save(GameSvc.urlParams(), function(data) {
+			console.log(data);
+		})
 	}
 
 };

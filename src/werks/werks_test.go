@@ -113,4 +113,36 @@ func TestGetActions(t *testing.T) {
 			t.Errorf("Expected %s, got %s", expected, actual)
 		}
 	}
+
+}
+
+func TestGetNextPlayer(t *testing.T) {
+	var g *Game
+	var p *Player
+	var expectedNames []string
+
+	t.Logf("wrap = true");
+	g = newGame()
+	expectedNames = []string {"Abel", "Baker", "Charlie", "Abel", "Baker", "Charlie"}
+	for i, name := range expectedNames {
+		p = g.getNextPlayer(true)
+		if p.Name != name {
+			t.Errorf("On iteration %d, expected %s and got %s", i, name, p.Name)
+		}
+	}
+
+	t.Logf("wrap = false");
+	g = newGame()
+	expectedNames = []string{"Abel", "Baker", "Charlie"}
+	for i, name := range expectedNames {
+		p = g.getNextPlayer(false)
+		if p.Name != name {
+			t.Errorf("On iteration %d, expected %s and got %s", i, name, p.Name)
+		}
+	}
+	p = g.getNextPlayer(false)
+	if p != nil {
+		t.Errorf("Expected to get nil, and got %s", p.Name)
+	}
+
 }

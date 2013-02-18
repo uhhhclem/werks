@@ -176,19 +176,19 @@ func apiActionHandler(w http.ResponseWriter, r *http.Request) {
 		actionsJson := g.getActionsJson()
 		w.Header().Add("content-type", "application/json")
 		fmt.Fprintf(w, "%s", actionsJson)
+		return;
 	}
 
-	if r.Method != "POST" {
-		return
-	}
-	if err = r.ParseForm(); err != nil {
-		serveError(w, err)
-		return
-	}
+	if r.Method == "POST" {
+		if err = r.ParseForm(); err != nil {
+			serveError(w, err)
+			return
+		}
 
-	abbr := r.FormValue("abbr")
+		abbr := r.FormValue("abbr")
+		g.performAction(abbr)
 
-	fmt.Printf("%s", abbr)
+	}
 }
 
 // handleContentRequest handles most HTTP GET requests for static resources.

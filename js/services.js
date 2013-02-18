@@ -38,6 +38,13 @@ werks.service('GameSvc', function() {
 		}
 	}
 
+	this.urlParams = function() {
+		return {
+			g: this.getGameId(),
+			p: this.getCurrentPlayerId()
+		};
+	}
+
 });
 
 werks.service('LocoSvc', function() {

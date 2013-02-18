@@ -1,12 +1,12 @@
 <div class="action" ng-switch on="actionType">
 	<div ng-switch-when="D">
-		<a ng-click="develop()" ng-class="locoKind">
+		<a ng-click="doAction()" ng-class="locoKind">
 			<span>{{a.noun}}</span>
 			<span>&nbsp;</span>
 			<span>({{a.cost}})</span>
 		</a>
 	</div>
 	<div ng-switch-when="P">
-		<a ng-click="pass()" style="color: blue;">Pass</a>
+		<a ng-click="doAction()" style="color: blue;">Pass</a>
 	</div>
 </div>
