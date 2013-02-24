@@ -17,6 +17,10 @@ werks.factory(
 	'Message', function($resource) { return $resource('/api/message?g=:gameId')})
 
 werks.config(['$routeProvider', function($routeProvider) {
+	$routeProvider.when('/login', {
+		templateUrl: '/views/login.tmpl',
+		controller: LoginCtrl
+	});
 	$routeProvider.when('/board', {
 		templateUrl: '/views/board.tmpl',
 		controller: BoardCtrl
@@ -25,7 +29,9 @@ werks.config(['$routeProvider', function($routeProvider) {
 		templateUrl: '/views/newGame.tmpl',
 		controller: NewGameCtrl
 	});
+	$routeProvider.otherwise({ redirectTo: 'login'});
 }]);
+
 
 var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSvc, Action) {
 
@@ -33,6 +39,7 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
   $scope.$location = $location;
   $scope.$routeParams = $routeParams;
 
+  $scope.user = {}
   $scope.messages = [];
 
   $scope.getPlayers = function() {
@@ -50,6 +57,56 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
   		$scope.actions = data;
   	})
   }
+};
+
+var LoginCtrl = function($scope, $location, $http) {
+
+	$scope.registering = false;
+	$scope.errorMessage = null;
+
+	$scope.toggleRegistering = function() {
+		$scope.registering = !$scope.registering;
+	}
+
+	$scope.registerDisabled = function() {
+		var p1 = $scope.password;
+		var p2 = $scope.repeatPassword;
+
+		return !p1 || !p2 || (p1 != p2) || p1.length < 4;
+	}
+
+	$scope.login = function() {
+		$scope.errorMessage = null;
+		var url = '/api/login?u=' + $scope.username + '&p=' + $scope.password;
+		$http.get(url).success(function(data){
+			console.log(data);
+			if (data.token) {
+				$scope.user.username = $scope.username
+				$scope.user.token = data.token;
+				$location.path('/newGame');
+			} else {
+				$scope.errorMessage = 'Invalid login, try again.';
+			}
+		})
+	}
+
+	$scope.register = function() {
+		if ($scope.registerDisabled()) {
+			return;
+		}
+		$scope.errorMessage = null;
+		var url = '/api/register?u=' + $scope.username + '&p=' + $scope.password;
+		$http.get(url).success(function(data){
+			console.log(data);
+			if (data.token) {
+				$scope.user.username = $scope.username
+				$scope.user.token = data.token;
+				$location.path('/newGame');
+			} else {
+				$scope.errorMessage = data.msg;
+			}
+		})
+	}
 };
 
 var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc, GameSvc) {

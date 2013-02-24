@@ -1,0 +1,51 @@
+<div>
+	<table ng-show="!registering">
+		<tr>
+			<td class="title">
+				<span>Login</span>
+			</tr>
+		</tr>
+		<tr>
+			<td class="label">username</td>
+			<td><input type="text" ng-model="username" required="true"/></td>
+		</tr>
+		<tr>
+			<td class="label">password</td>
+			<td><input type="password" ng-model="password" required="true"/>
+		</tr>
+		<tr>
+			<td class="submit">
+				<a href="" ng-click="login()">login</a>
+				<a href="" ng-click="toggleRegistering()">register</a>
+			</td>
+		</tr>
+	</table>
+	<table ng-show="registering">
+		<tr>
+			<td class="title">
+				<span>Register</span>
+			</tr>
+		</tr>
+		<tr>
+			<td class="label">username</td>
+			<td><input type="text" ng-model="username" required="true"/></td>
+		</tr>
+		<tr>
+			<td class="label">password</td>
+			<td><input type="password" ng-model="password" required="true"/>
+		</tr>
+		<tr>
+			<td class="label">repeat password</td>
+			<td><input type="password" ng-model="repeatPassword" required="true"/>
+		</tr>
+		<tr>
+			<td class="submit">
+				<a href=""
+					 ng-class="{disabled: registerDisabled()}"
+					 ng-click="register()"
+				<a href="" ng-click="toggleRegistering()">register</a>
+			</td>
+		</tr>
+	</table>
+	<div class="error">{{errorMessage}}</div>
+</div>

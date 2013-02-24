@@ -23,6 +23,7 @@ type Users struct {
   users []*User
   usersByNickname map[string]*User
   usersById map[string]*User
+  usersByToken map[string]*User
 }
 
 // User is an individual user.
@@ -30,6 +31,7 @@ type User struct {
 	Id string 	`json:"id"`
 	Nickname string `json:"nickname"`
 	Pwhash string `json:"pwhash"`
+	Token string `json:"-"`
 }
 
 // Init creates a new Users structure.
@@ -41,14 +43,15 @@ func Init(salt string, filename string) *Users {
 	u.users = make([]*User, 0)
 	u.usersByNickname = make(map[string]*User)
 	u.usersById = make(map[string]*User)
+	u.usersByToken = make(map[string]*User)
 
 	return u
 }
 
-// New creates a new user, with the given nickname and password.  It returns
+// Register creates a new user, with the given nickname and password.  It returns
 // the user created, or an error if the nickname already exists.  The nickname
 // is canonicalized, and the password is salted and hashed.
-func (s *Users) New(nickname string, password string) (*User, error) {
+func (s *Users) Register(nickname string, password string) (*User, error) {
 
 	if s.passwordSalt == "" {
 		return nil, errors.New("No password salt found.")
@@ -59,10 +62,16 @@ func (s *Users) New(nickname string, password string) (*User, error) {
 		return nil, err
 	}
 
+
 	u := &User {
 		Id: id,
 		Nickname: nickname,
 		Pwhash: s.hashPassword(canonicalizePassword(password))}
+
+	u.Token, err = uuid.GenUUID()
+	if err != nil {
+		return nil, err
+	}
 
 	key := canonicalizeNickname(u.Nickname)
 	if s.usersByNickname[key] != nil {
@@ -72,11 +81,13 @@ func (s *Users) New(nickname string, password string) (*User, error) {
 	s.users = append(s.users, u)
 	s.usersByNickname[key] = u
 	s.usersById[u.Id] = u
+	s.usersByToken[u.Token] = u
 
 	return u, nil
 }
 
-// Login validates a user login and returns the User.
+// Login validates a user login and returns the User.  If a user is
+// logged in, he gets assigned a Token.
 func (s *Users) Login(nickname, password string) (*User, error) {
 	u := s.LookupByNickname(nickname)
 	if u == nil {
@@ -84,6 +95,16 @@ func (s *Users) Login(nickname, password string) (*User, error) {
 	}
 	if u.Pwhash != s.hashPassword(canonicalizePassword(password)) {
 		return nil, InvalidPasswordError
+	}
+
+	// login succeeded, so assign token if it hasn't already been assigned.
+	if u.Token == "" {
+		var err error
+		u.Token, err = uuid.GenUUID()
+		if err != nil {
+			return nil, err
+		}
+		s.usersByToken[u.Token] = u
 	}
 	return u, nil
 }
@@ -96,6 +117,10 @@ func (s *Users) LookupById(id string) *User {
 // LookupByNickname returns the User with the given nickname, or nil if none exists.
 func (s *Users) LookupByNickname(nickname string) *User {
 	return s.usersByNickname[canonicalizeNickname(nickname)]
+}
+
+func (s *Users) LookupByToken(token string) *User {
+	return s.usersByToken[token]
 }
 
 // canonicalizeNickname strips non-alpha-numeric characters from

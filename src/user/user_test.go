@@ -7,13 +7,13 @@ import (
 const salt = "semolina pilchard"
 const filename = "users.json"
 
-func TestNew(t *testing.T) {
+func TestRegister(t *testing.T) {
 	var u *User
 	var err error
 
 	s := Init(salt, filename)
 
-	u, err = s.New("nickname", "password")
+	u, err = s.Register("nickname", "password")
 	if err != nil {
 		t.Errorf("%s", err)
 		return
@@ -25,7 +25,7 @@ func TestNew(t *testing.T) {
 		t.Errorf("LookupById failed.")
 	}
 
-	u, err = s.New("nickname", "password")
+	u, err = s.Register("nickname", "password")
 	if err == nil {
 		t.Errorf("Created user with a duplicate nickname.")
 	}
@@ -63,7 +63,7 @@ func TestLogin(t *testing.T) {
 	s := Init(salt, filename)
 
 	for i, _ := range nicknames {
-		s.New(nicknames[i], passwords[i])
+		s.Register(nicknames[i], passwords[i])
 	}
 
 	var user *User
@@ -71,6 +71,10 @@ func TestLogin(t *testing.T) {
 
 	user, err = s.Login("..Alpha", "Epsilon")
 	if user == nil {
+		if s.LookupByToken(user.Token) != user {
+			t.Errorf("Token wasn't assigned.")
+			return
+		}
 		if err == nil {
 			t.Errorf("Should have gotten an error.")
 		} else {
@@ -101,6 +105,34 @@ func TestLogin(t *testing.T) {
 
 }
 
+func TestLoginDoesntReassignToken(t *testing.T) {
+	var err error
+	var u *User
+
+	s := Init(salt, filename)
+	_, err = 	s.Register("foo", "bar")
+
+	u, err = s.Login("foo", "bar")
+	if err != nil {
+		t.Errorf("%s", err)
+		return
+	}
+	token := u.Token
+	if token == "" {
+		t.Errorf("Token should have been assigned.")
+		return
+	}
+	u, err = s.Login("foo", "bar")
+	if err != nil {
+		t.Errorf("%s", err)
+		return
+	}
+	if token != u.Token {
+		t.Errorf("Token got reassigned.")
+		return
+	}
+}
+
 func TestSaveAndLoad(t *testing.T) {
 	var nicknames = []string {"Alpha", "Beta", "Gamma", "Delta"}
 	var passwords = []string {"Epsilon", "Omicron", "Omega", "Upsilon"}
@@ -108,7 +140,7 @@ func TestSaveAndLoad(t *testing.T) {
 	s := Init(salt, filename)
 
 	for i, _ := range nicknames {
-		s.New(nicknames[i], passwords[i])
+		s.Register(nicknames[i], passwords[i])
 	}
 	for i, _ := range nicknames {
 		if s.LookupByNickname(nicknames[i]) == nil {

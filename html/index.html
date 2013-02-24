@@ -4,8 +4,8 @@
 		<title>Lokomotive Werks</title>
 		<link rel="stylesheet" href="/css/werks.css">
 	</head>
-	<body ng-app="werks" ng-cloak="true" ng-controller="MainCtrl"
-			ng-init="$location.path('newGame')">
+	<body ng-app="werks" ng-cloak="true" ng-controller="MainCtrl">
+		<pre>{{$location.path()}}</pre>
 		<div ng-view/>
 	</body>
   <script src="/lib/angular.js"></script>

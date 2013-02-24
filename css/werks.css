@@ -1,3 +1,20 @@
+a:link, a:visited {
+	font-weight: bold;
+	color: blue;
+	text-decoration: none;
+}
+
+a:hover {
+	font-weight: bold;
+	color: blue;
+	text-decoration: underline;
+}
+
+a.disabled {
+	text-decoration: none;
+	color: gray;
+}
+
 body, table {
     font-family: Arial, Helvetica, "Sans Serif";
     font-size: 10pt;

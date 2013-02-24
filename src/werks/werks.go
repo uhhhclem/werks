@@ -10,8 +10,10 @@ import (
 	"os"
 	"strconv"
 	"time"
+	"user"
 )
 
+var users *user.Users
 var en = errors.New
 
 // getGameFromRequest finds the game whose ID is in the URL's query string or form.
@@ -130,6 +132,69 @@ func serveError(w http.ResponseWriter, e error) {
 	http.Error(w, e.Error(), http.StatusInternalServerError)
 }
 
+type LoginResponse struct {
+	Msg string `json:"msg"`
+	Token string `json:"token"`
+}
+
+func invalidUserResponse(msg string) []byte {
+	r := LoginResponse {Msg: msg}
+	b, err := json.Marshal(r)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+func validUserResponse(u *user.User) []byte {
+	r := LoginResponse{Token: u.Token}
+	b, err := json.Marshal(r)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// apiLoginHandler logs in a user.
+func apiLoginHandler(w http.ResponseWriter, r *http.Request) {
+	username := r.FormValue("u")
+	password := r.FormValue("p")
+	responseJson := invalidUserResponse("Invalid login.")
+	if username != "" && password != "" {
+		u, err := users.Login(username, password)
+		if err == nil {
+			responseJson = validUserResponse(u)
+		}
+	}
+	w.Header().Add("content-type", "application/json")
+	fmt.Fprintf(w, "%s", responseJson)
+}
+
+// apiRegisterHandler registers a user
+func apiRegisterHandler (w http.ResponseWriter, r *http.Request) {
+	var responseJson []byte
+	var err error
+	var u *user.User
+
+	username := r.FormValue("u")
+	password := r.FormValue("p")
+
+	u, err = users.Register(username, password)
+	if err != nil {
+		responseJson = invalidUserResponse(fmt.Sprintf("%s", err))
+	} else {
+		err = users.SaveUsers()
+		if err != nil {
+			responseJson = invalidUserResponse("Registration failed.")
+		} else {
+			responseJson = validUserResponse(u)
+		}
+	}
+
+	w.Header().Add("content-type", "application/json")
+	fmt.Fprintf(w, "%s", responseJson)
+}
+
 // apiNewGameHandler creates a new game.
 func apiNewGameHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
@@ -219,6 +284,23 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 
 func initApp() {
 	rand.Seed(time.Now().UnixNano())
+	users = user.Init("CaCl", "users.json")
+
+	// load the users file, and create a default user if no users
+	// file is found.
+	var err error
+
+	err = users.LoadUsers()
+	if err != nil {
+		_, err = users.Register("admin", "admin")
+		if err != nil {
+			panic(err)
+		}
+		err = users.SaveUsers()
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func Serve() {
@@ -233,6 +315,8 @@ func Serve() {
 	// register handlers for API calls
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/api/locos", apiLocosHandler)
+	http.HandleFunc("/api/login", apiLoginHandler)
+	http.HandleFunc("/api/register", apiRegisterHandler)
 	http.HandleFunc("/api/players", apiPlayersHandler)
 	http.HandleFunc("/api/game", apiGameHandler)
 	http.HandleFunc("/api/newGame", apiNewGameHandler)
