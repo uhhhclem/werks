@@ -1,21 +1,19 @@
 <div>
-	<table ng-show="!registering">
+	<table class="login"
+				 ng-show="!registering">
 		<tr>
-			<td class="title">
-				<span>Login</span>
-			</tr>
-		</tr>
-		<tr>
-			<td class="label">username</td>
-			<td><input type="text" ng-model="username" required="true"/></td>
-		</tr>
-		<tr>
-			<td class="label">password</td>
-			<td><input type="password" ng-model="password" required="true"/>
+			<td>
+				<div>username:</div>
+				<input autofocus type="text" ng-model="username" required="true"/>
+			</td>
+			<td>
+				<div>password:</div>
+				<input type="password" ng-model="password" required="true"/>
+				<div class="button"><button ng-click=login()>Login</button>
+			</td>
 		</tr>
 		<tr>
 			<td class="submit">
-				<a href="" ng-click="login()">login</a>
 				<a href="" ng-click="toggleRegistering()">register</a>
 			</td>
 		</tr>
@@ -27,23 +25,25 @@
 			</tr>
 		</tr>
 		<tr>
-			<td class="label">username</td>
-			<td><input type="text" ng-model="username" required="true"/></td>
-		</tr>
-		<tr>
-			<td class="label">password</td>
-			<td><input type="password" ng-model="password" required="true"/>
-		</tr>
-		<tr>
-			<td class="label">repeat password</td>
-			<td><input type="password" ng-model="repeatPassword" required="true"/>
+			<td>
+				<div>username:</div>
+				<input type="text" ng-model="username" required="true"/>
+			</td>
+			<td>
+					<div>password</div>
+					<input type="password" ng-model="password" required="true"/>
+			</td>
+			<td>
+				<div>verify password:</div>
+				<input type="password" ng-model="repeatPassword" required="true"/>
+			</td>
 		</tr>
 		<tr>
 			<td class="submit">
 				<a href=""
 					 ng-class="{disabled: registerDisabled()}"
-					 ng-click="register()"
-				<a href="" ng-click="toggleRegistering()">register</a>
+					 ng-click="register()">register</a>
+				<a href="" ng-click="toggleRegistering()">cancel</a>
 			</td>
 		</tr>
 	</table>

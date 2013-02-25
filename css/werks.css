@@ -87,6 +87,14 @@ table .loco tr {
 	height: 25px;
 }
 
+table.login tr {
+	vertical-align: top;
+}
+
+table.login div.button {
+	text-align: right;
+}
+
 div.die {
 	height: 25px;
 	width: 25px;
