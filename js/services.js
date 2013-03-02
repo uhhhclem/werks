@@ -1,17 +1,58 @@
 'use strict';
 
-werks.service('GameSvc', function() {
+werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 
-	this.setGame = function(game) {
-		this._game = game;
-	}
+	var _globals = {
+		game: null,
+		username: null,
+		token: null,
+	};
+
+	this.getGlobals = function() {
+		return _globals;
+	};
+
+	this.setUserInfo = function(username, token) {
+		_globals.username = username;
+		_globals.token = token;
+	};
+
+	this.newGame = function(players, callback) {
+		var params = {}
+		params.playerCount = players.length;
+		for (var i = 0; i < params.playerCount; i++) {
+			params['player' + i] = players[i]
+		}
+		$http.post('/api/newGame', params).success(function(data) {
+			_globals.game = data;
+			_initFromGame();
+			callback();
+		});
+	};
+
+	this.getGame = function(game_id, callback) {
+		var url = '/api/game?g=' + game_id + '&u=' + _globals.token;
+		$http.get(url).success(function(data) {
+			_globals.game = data;
+			_initFromGame();
+			callback();
+		});
+	};
+
+	var _initFromGame = function() {
+		var g = _globals.game;
+		_globals.locos = LocoSvc.buildLocosObject(g.locos);
+		_globals.rows = LocoSvc.buildRows(g.locos);
+		_globals.players = g.players;
+	};
+
 
 	this.getGameId = function() {
-		return this._game.id;
+		return _globals.game.id;
 	}
 
 	this.getCurrentPlayer = function() {
-		var game = this._game;
+		var game = _globals.game;
 		for (var i=0; i<game.players.length; i++) {
 			var p = game.players[i];
 			if (p.isCurrent) {
@@ -21,17 +62,13 @@ werks.service('GameSvc', function() {
 		return null;
 	}
 
-	this.getPlayers = function() {
-		return this._game.players;
-	}
-
 	this.getCurrentPlayerId = function() {
 		return this.getCurrentPlayer().id;
 	}
 
 	this.getLoco = function(key) {
-		for (var i=0; i<this._game.locos.length; i++) {
-			var loco = this._game.locos[i];
+		for (var i=0; i< _globals.game.locos.length; i++) {
+			var loco = _globals.game.locos[i];
 			if (loco.key == key) {
 				return loco;
 			}
@@ -45,7 +82,7 @@ werks.service('GameSvc', function() {
 		};
 	}
 
-});
+}]);
 
 werks.service('LocoSvc', function() {
 
@@ -96,8 +133,8 @@ werks.service('FactorySvc', function () {
 		var f = {};
 		f.factory = scope.factory;
 		f.player = scope.player;
-		f.loco = scope.locos[scope.factory.key];
-		f.upgradeTo = scope.locos[f.loco.upgradeTo];
+		f.loco = scope.globals.locos[scope.factory.key];
+		f.upgradeTo = scope.globals.locos[f.loco.upgradeTo];
 		f.upgradeCost = (f.upgradeTo === undefined)
 				? null
 				: f.upgradeTo.productionCost - f.loco.productionCost;

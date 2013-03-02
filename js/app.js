@@ -39,12 +39,9 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
   $scope.$location = $location;
   $scope.$routeParams = $routeParams;
 
-  $scope.user = {}
-  $scope.messages = [];
+  $scope.globals = GameSvc.getGlobals();
 
-  $scope.getPlayers = function() {
-  	return GameSvc.getPlayers();
-  };
+  $scope.messages = [];
 
   $scope.generation = function(gen) {
   	return LocoSvc.getGeneration(gen);
@@ -59,7 +56,7 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
   }
 };
 
-var LoginCtrl = function($scope, $location, $http) {
+var LoginCtrl = function($scope, $location, $http, GameSvc) {
 
 	$scope.registering = false;
 	$scope.errorMessage = null;
@@ -81,8 +78,7 @@ var LoginCtrl = function($scope, $location, $http) {
 		$http.get(url).success(function(data){
 			console.log(data);
 			if (data.token) {
-				$scope.user.username = $scope.username
-				$scope.user.token = data.token;
+				GameSvc.setUserInfo($scope.username, data.token);
 				$location.path('/newGame');
 			} else {
 				$scope.errorMessage = 'Invalid login, try again.';
@@ -120,25 +116,13 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc, GameSvc) 
 		{name: 'Player 5'}];
 
 	$scope.startGame = function() {
-		// build playerCount, player0, player1... form values
-		var g = new NewGame();
-		g.name = $scope.name;
+		var players = [];
 		for (var i = 0; i < $scope.playerCount; i++) {
-			var key = 'player' + i;
-			g[key] = $scope.players[i].name;
+			players.push($scope.players[i].name);
+			GameSvc.newGame(players, function() {
+				$location.path('board');
+			});
 		}
-		g.playerCount = $scope.playerCount;
-
-		// post to api/newGame, and on response, load the game data
-		// and switch to the board view.
-  	g.$save(function(data) {
-  		console.log(data);
-  		GameSvc.setGame(data);
-  		$scope.$parent.locos = LocoSvc.buildLocosObject(data.locos);
-  		$scope.$parent.rows = LocoSvc.buildRows(data.locos);
-  		$scope.$parent.players = data.players;
-			$location.path('board');
-  	});
 	}
 }
 
