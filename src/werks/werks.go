@@ -9,12 +9,14 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 	"user"
 )
 
 var users *user.Users
 var en = errors.New
+var verboseLogs = false
 
 // getGameFromRequest finds the game whose ID is in the URL's query string or form.
 func getGameFromRequest(r *http.Request) (*Game, error) {
@@ -253,6 +255,10 @@ func apiActionHandler(w http.ResponseWriter, r *http.Request) {
 		abbr := r.FormValue("abbr")
 		g.performAction(abbr)
 
+		gameStateJson := g.getGameStateJson()
+		w.Header().Add("content-type", "application/json")
+		fmt.Fprintf(w, "%s", gameStateJson)
+		return;
 	}
 }
 
@@ -330,7 +336,16 @@ func Serve() {
 
 func Log(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		if logUrl(r.URL.String()) {
+			log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+		}
 		handler.ServeHTTP(w, r)
 	})
+}
+
+func logUrl(url string) bool {
+	if verboseLogs {
+		return true
+	}
+	return !strings.HasPrefix(url, "/api/message") && !strings.HasPrefix(url, "/api/chat")
 }

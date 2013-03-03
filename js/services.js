@@ -8,37 +8,7 @@ werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 		token: null,
 	};
 
-	this.getGlobals = function() {
-		return _globals;
-	};
-
-	this.setUserInfo = function(username, token) {
-		_globals.username = username;
-		_globals.token = token;
-	};
-
-	this.newGame = function(players, callback) {
-		var params = {}
-		params.playerCount = players.length;
-		for (var i = 0; i < params.playerCount; i++) {
-			params['player' + i] = players[i]
-		}
-		$http.post('/api/newGame', params).success(function(data) {
-			_globals.game = data;
-			_initFromGame();
-			callback();
-		});
-	};
-
-	this.getGame = function(game_id, callback) {
-		var url = '/api/game?g=' + game_id + '&u=' + _globals.token;
-		$http.get(url).success(function(data) {
-			_globals.game = data;
-			_initFromGame();
-			callback();
-		});
-	};
-
+	// initialize the globals with the information from the current game.
 	var _initFromGame = function() {
 		var g = _globals.game;
 		_globals.locos = LocoSvc.buildLocosObject(g.locos);
@@ -46,11 +16,28 @@ werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 		_globals.players = g.players;
 	};
 
+	// perform one of the available actions, and update the globals with
+	// the new game state and the currently available actions.
+	this.doAction = function(abbr) {
+		var p = this.urlParams();
+	  var url = '/api/action?g=' + p.g + '&p=' + p.p + '&abbr=' + abbr;
+	  $http.post(url).success(function(data) {
+	  	_globals.game = data.game;
+	  	_globals.actions = data.actions;
+	  });
+	};
 
-	this.getGameId = function() {
-		return _globals.game.id;
-	}
+	// Get the available actions for the current user.  Actions
+	// will appear in _globals when they're returned.
+	this.getActions = function() {
+		var p = this.urlParams();
+	  var url = '/api/action?g=' + p.g + '&p=' + p.p;
+  	$http.get(url).success(function(data) {
+  		_globals.actions = data;
+  	});
+  };
 
+	// find which player is current and return it.
 	this.getCurrentPlayer = function() {
 		var game = _globals.game;
 		for (var i=0; i<game.players.length; i++) {
@@ -66,6 +53,26 @@ werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 		return this.getCurrentPlayer().id;
 	}
 
+	// get game game_id from the server, calling callback after it's been
+	// retrieved.
+	this.getGame = function(game_id, callback) {
+		var url = '/api/game?g=' + game_id + '&u=' + _globals.token;
+		$http.get(url).success(function(data) {
+			_globals.game = data;
+			_initFromGame();
+			callback();
+		});
+	};
+
+	this.getGameId = function() {
+		return _globals.game.id;
+	}
+
+	this.getGlobals = function() {
+		return _globals;
+	};
+
+	// get a loco given its key
 	this.getLoco = function(key) {
 		for (var i=0; i< _globals.game.locos.length; i++) {
 			var loco = _globals.game.locos[i];
@@ -75,6 +82,29 @@ werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 		}
 	}
 
+	// create a new game given a list of player names; it calls callback after
+	// the game is created.
+	this.newGame = function(players, callback) {
+		var params = {}
+		params.playerCount = players.length;
+		for (var i = 0; i < params.playerCount; i++) {
+			params['player' + i] = players[i]
+		}
+		$http.post('/api/newGame', params).success(function(data) {
+			_globals.game = data;
+			_initFromGame();
+			callback();
+		});
+	};
+
+	// save the current user's username and token in the globals
+	this.setUserInfo = function(username, token) {
+		_globals.username = username;
+		_globals.token = token;
+	};
+
+
+	// returns the params used in just about every URL.
 	this.urlParams = function() {
 		return {
 			g: this.getGameId(),

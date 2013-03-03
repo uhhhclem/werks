@@ -88,4 +88,30 @@ describe('GameSvc', function(){
 		expect(g.rows).toBe('2');
 	});
 
+	it('should get actions.', function(){
+		var g = gameSvc.getGlobals();
+		g.game = {
+			id: 'game_id',
+			players: [{id: 0, isCurrent: false}, {id: 1, isCurrent: true}]
+		};
+		http.expectGET('/api/action?g=game_id&p=1').respond('actions');
+		gameSvc.getActions();
+		http.flush();
+		expect(g.actions).toBe('actions');
+	});
+
+	it('should post actions.', function() {
+		var g = gameSvc.getGlobals();
+		g.game = {
+			id: 'game_id',
+			players: [{id: 0, isCurrent: false}, {id: 1, isCurrent: true}]
+		};
+		http.expectPOST('/api/action?g=game_id&p=1&abbr=abbr')
+			.respond({game: 'game', actions: 'actions'});
+		gameSvc.doAction('abbr');
+		http.flush();
+
+		expect(g.game).toBe('game');
+	});
+
 });

@@ -8,8 +8,6 @@ werks.factory(
 werks.factory(
 	'NewGame', function($resource) { return $resource('/api/newGame')});
 werks.factory(
-	'Game', function($resource) { return $resource('/api/game')});
-werks.factory(
 	'Locos', function($resource) { return $resource('/api/locos')});
 werks.factory(
 	'Players', function($resource) { return $resource('/api/players')});
@@ -21,13 +19,13 @@ werks.config(['$routeProvider', function($routeProvider) {
 		templateUrl: '/views/login.tmpl',
 		controller: LoginCtrl
 	});
-	$routeProvider.when('/board', {
-		templateUrl: '/views/board.tmpl',
-		controller: BoardCtrl
-	});
-	$routeProvider.when('/newGame', {
+	$routeProvider.when('/newGame/:token', {
 		templateUrl: '/views/newGame.tmpl',
 		controller: NewGameCtrl
+	});
+	$routeProvider.when('/board/:token/:game_id', {
+		templateUrl: '/views/board.tmpl',
+		controller: BoardCtrl
 	});
 	$routeProvider.otherwise({ redirectTo: 'login'});
 }]);
@@ -45,15 +43,14 @@ var MainCtrl = function($scope, $route, $location, $routeParams, LocoSvc, GameSv
 
   $scope.generation = function(gen) {
   	return LocoSvc.getGeneration(gen);
-  }
+  };
+
+  $scope.getCurrentPlayer = GameSvc.getCurrentPlayer;
 
   $scope.getActions = function() {
-  	var a = new Action();
-  	a.$get(GameSvc.urlParams(), function(data) {
-  		$scope.currentPlayer = GameSvc.getCurrentPlayer();
-  		$scope.actions = data;
-  	})
-  }
+  	$scope.actions = GameSvc.getActions()
+  };
+
 };
 
 var LoginCtrl = function($scope, $location, $http, GameSvc) {
@@ -79,7 +76,7 @@ var LoginCtrl = function($scope, $location, $http, GameSvc) {
 			console.log(data);
 			if (data.token) {
 				GameSvc.setUserInfo($scope.username, data.token);
-				$location.path('/newGame');
+				$location.path('/newGame/' + data.token);
 			} else {
 				$scope.errorMessage = 'Invalid login, try again.';
 			}
@@ -95,9 +92,8 @@ var LoginCtrl = function($scope, $location, $http, GameSvc) {
 		$http.get(url).success(function(data){
 			console.log(data);
 			if (data.token) {
-				$scope.user.username = $scope.username
-				$scope.user.token = data.token;
-				$location.path('/newGame');
+				GameSvc.setUserInfo($scope.username, data.token);
+				$location.path('/newGame/' + data.token);
 			} else {
 				$scope.errorMessage = data.msg;
 			}
@@ -120,7 +116,9 @@ var NewGameCtrl = function($scope, $location, $http, NewGame, LocoSvc, GameSvc) 
 		for (var i = 0; i < $scope.playerCount; i++) {
 			players.push($scope.players[i].name);
 			GameSvc.newGame(players, function() {
-				$location.path('board');
+				var t = $scope.globals.token;
+				var g = $scope.globals.game.id;
+				$location.path('/board/' + t + '/' + g);
 			});
 		}
 	}
@@ -269,11 +267,7 @@ var ActionCtrl = function($scope, GameSvc, Action) {
 	}
 
 	$scope.doAction = function() {
-		var a = new Action();
-		a.abbr = $scope.a.abbr;
-		a.$save(GameSvc.urlParams(), function(data) {
-			console.log(data);
-		})
+		GameSvc.doAction($scope.a.abbr);
 	}
 
 };

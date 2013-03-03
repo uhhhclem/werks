@@ -14,10 +14,10 @@
 			</div>
 			<div class="newAction">
 				<div class="phase">
-					<span>{{currentPlayer.name}}: </span>
-					<span>{{actions.phase}} > </span>
+					<span>{{getCurrentPlayer().name}}: </span>
+					<span>{{globals.actions.phase}} > </span>
 				</div>
-				<div ng-repeat="a in actions.actions"
+				<div ng-repeat="a in globals.actions.actions"
 						 ng-include="'/views/action.tmpl'"
 						 ng-controller="ActionCtrl">
 				</div>

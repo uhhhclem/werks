@@ -107,16 +107,59 @@ type Action struct {
 	Cost int `json:"cost"`
 }
 
+// GameState represents the current state of the game, including the
+// currently available actions.
+type GameState struct {
+	Game *Game `json:"game"`
+	Actions *Actions `json:"actions"`
+}
+
+func (g *Game) findAction(abbr string) *Action {
+	actions := g.getActions()
+	for _, a := range actions.Actions {
+		if a.Abbr == abbr {
+			return &a
+		}
+	}
+	return nil
+}
+
 func (g *Game) performAction(abbr string) {
-	log.Printf("performAction: %s", abbr)
+	m := make(map[Phase]func(*Action))
+	m[Development] = func(a *Action) { g.performDevelopmentAction(a)}
+	m[Capacity] = func(a *Action) { g.performCapacityAction(a)}
+	m[Production] = func(a *Action) { g.performProductionAction(a)}
 
-	if abbr == "P" {
+	a := g.findAction(abbr)
+	if a == nil {
+		log.Printf("Couldn't find action for abbreviation %s", abbr)
+	}
 
+	m[g.Phase](a)
+}
+
+func (g *Game) performDevelopmentAction(a *Action) {
+	if (a.Abbr == "P") {
+		p := g.getNextPlayer(false)
+		if p == nil {
+			g.Phase = Capacity
+			g.setCurrentPlayer(g.getStartPlayer())
+		} else {
+			g.setCurrentPlayer(p)
+		}
 	}
 }
 
+func (g *Game) performCapacityAction(a *Action) {
+	log.Printf("Capacity action: %s", a.Abbr)
+}
+
+func (g *Game) performProductionAction(a *Action) {
+	log.Printf("Production action: %s", a.Abbr)
+}
+
 // getActions returns the actions that are available to the current
-// user right now.
+// player right now.
 func (g *Game) getActions() *Actions {
 
 	actions := make([]Action, 0)
@@ -268,6 +311,28 @@ func (g *Game) getCurrentPlayer() *Player {
 	panic("No current player!")
 }
 
+// getStartPlayer returns the current starting player.
+func (g *Game) getStartPlayer() *Player {
+	for _, p := range g.Players {
+		if p.TurnOrder == 0 {
+			return p
+		}
+	}
+	panic("No start player!")
+}
+
+// setCurrentPlayer makes player p the active player.
+func (g *Game) setCurrentPlayer(p *Player) {
+	for i, p0 := range g.Players {
+		if p0 == p {
+			g.ActivePlayer = i
+			p0.IsCurrent = true
+		} else {
+			p0.IsCurrent = false
+		}
+	}
+}
+
 // rollDie rolls a Die and makes it visible.
 func rollDie() Die {
 	return Die{Pips: rand.Intn(6) + 1, Render: true}
@@ -358,6 +423,15 @@ func (g *Game) getGameJson() []byte {
 		panic(err)
 	}
 
+	return b
+}
+
+func (g *Game) getGameStateJson() []byte {
+	s := &GameState{Game: g, Actions: g.getActions()}
+	b, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
 	return b
 }
 
