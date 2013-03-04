@@ -13,7 +13,6 @@ werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 		var g = _globals.game;
 		_globals.locos = LocoSvc.buildLocosObject(g.locos);
 		_globals.rows = LocoSvc.buildRows(g.locos);
-		_globals.players = g.players;
 	};
 
 	// perform one of the available actions, and update the globals with
@@ -24,6 +23,7 @@ werks.service('GameSvc', ['$http', 'LocoSvc', function($http, LocoSvc) {
 	  $http.post(url).success(function(data) {
 	  	_globals.game = data.game;
 	  	_globals.actions = data.actions;
+	  	_initFromGame();
 	  });
 	};
 

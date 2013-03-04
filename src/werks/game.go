@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"strings"
 	"uuid"
 )
 
@@ -105,6 +106,7 @@ type Action struct {
 	Verb string `json:"verb"`
 	Noun string `json:"noun"`
 	Cost int `json:"cost"`
+	Loco *Loco `json:"-"`
 }
 
 // GameState represents the current state of the game, including the
@@ -124,6 +126,8 @@ func (g *Game) findAction(abbr string) *Action {
 	return nil
 }
 
+// performAction finds the Action for the given abbreviation and routes
+// control to the handler appropriate for the phase.
 func (g *Game) performAction(abbr string) {
 	m := make(map[Phase]func(*Action))
 	m[Development] = func(a *Action) { g.performDevelopmentAction(a)}
@@ -139,14 +143,21 @@ func (g *Game) performAction(abbr string) {
 }
 
 func (g *Game) performDevelopmentAction(a *Action) {
-	if (a.Abbr == "P") {
-		p := g.getNextPlayer(false)
-		if p == nil {
-			g.Phase = Capacity
-			g.setCurrentPlayer(g.getStartPlayer())
-		} else {
-			g.setCurrentPlayer(p)
-		}
+	// possible actions are:
+	//   P = pass
+	//   D = develop
+	if strings.HasPrefix(a.Abbr, "D") {
+		p := g.getCurrentPlayer()
+		f := Factory {Key: a.Loco.Key, Capacity: 1}
+		p.Factories = append(p.Factories, f)
+		p.Money -= a.Loco.DevelopmentCost
+	}
+	p := g.getNextPlayer(false)
+	if p == nil {
+		g.Phase = Capacity
+		g.setCurrentPlayer(g.getStartPlayer())
+	} else {
+		g.setCurrentPlayer(p)
 	}
 }
 
@@ -172,7 +183,8 @@ func (g *Game) getActions() *Actions {
 					Abbr: abbr,
 					Verb: "Develop",
 					Noun: loco.Name,
-					Cost: loco.DevelopmentCost})
+					Cost: loco.DevelopmentCost,
+					Loco: loco})
 			}
 		}
 	}

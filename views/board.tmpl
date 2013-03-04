@@ -1,4 +1,5 @@
 <div>
+
 	<table style="display: inline-block; vertical-align: top;">
 		<tr ng-repeat="row in globals.rows">
 			<td ng-repeat="loco in row" ng-include="'/views/train.tmpl'">
@@ -7,7 +8,7 @@
 	</table>
 
 	<div style="display: inline-block; vertical-align: top;">
-		<div ng-repeat="player in globals.players" ng-include="'/views/player.tmpl'"></div>
+		<div ng-repeat="player in globals.game.players" ng-include="'/views/player.tmpl'"></div>
 		<div class="actions">
 			<div>
 				<button ng-click="getActions()" name="getActions">Get actions</button>
@@ -30,6 +31,17 @@
 			{{message.text}}
 		</div>
 	</div>
+
 	<div id="chat" ng-include="'/views/chat.tmpl'">
 	</div>
+
+
+	<div id="debug">
+		<input type="checkbox" ng-model="debug">
+		debug
+		<div ng-show="debug">
+			<code>{{globals}}</code>
+		</div>
+	</div>
+
 </div>
