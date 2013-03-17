@@ -322,7 +322,7 @@ func Serve(path string) {
 	// register handlers for the static URLs
 	static_dirs := []string{"css", "html", "js", "lib", "views"}
 	for _, path := range static_dirs {
-		http.HandleFunc(rootPath + "/"+path+"/", handleContentRequest)
+		http.HandleFunc("/"+path+"/", handleContentRequest)
 	}
 
 	// register handlers for API calls

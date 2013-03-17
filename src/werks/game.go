@@ -13,7 +13,7 @@ import (
 	"uuid"
 )
 
-var LocosJsonPath = "../json/locos.json"
+var LocosJsonPath = "./json/locos.json"
 
 // Game represents a single game.
 type Game struct {
