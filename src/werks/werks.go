@@ -14,6 +14,7 @@ import (
 	"user"
 )
 
+var rootPath string
 var users *user.Users
 var en = errors.New
 var verboseLogs = false
@@ -264,8 +265,10 @@ func apiActionHandler(w http.ResponseWriter, r *http.Request) {
 
 // handleContentRequest handles most HTTP GET requests for static resources.
 func handleContentRequest(w http.ResponseWriter, r *http.Request) {
-	file, err := os.Open("../" + r.URL.Path)
+	path := rootPath + r.URL.Path
+	file, err := os.Open(path)
 	if err != nil {
+		log.Printf("Couldn't open %s.", path)
 		http.NotFound(w, r)
 		return
 	}
@@ -279,8 +282,10 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 	if path == "/" {
 		path = "/index.html"
 	}
-	file, err := os.Open("../html" + path)
+	path = rootPath + "/html" + path
+	file, err := os.Open(path)
 	if err != nil {
+		log.Printf("Couldn't open %s.", path)
 		http.NotFound(w, r)
 		return
 	}
@@ -309,13 +314,15 @@ func initApp() {
 	}
 }
 
-func Serve() {
+func Serve(path string) {
+	rootPath = path
+
 	initApp()
 
 	// register handlers for the static URLs
 	static_dirs := []string{"css", "html", "js", "lib", "views"}
 	for _, path := range static_dirs {
-		http.HandleFunc("/"+path+"/", handleContentRequest)
+		http.HandleFunc(rootPath + "/"+path+"/", handleContentRequest)
 	}
 
 	// register handlers for API calls
