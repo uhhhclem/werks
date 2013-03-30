@@ -107,7 +107,7 @@ func TestGetActions(t *testing.T) {
 		t.Errorf("There should be exactly %d actions at start.", len(expectedAbbrs))
 		return
 	}
-	for i, expected := range(expectedAbbrs) {
+	for i, expected := range expectedAbbrs {
 		actual := actions[i].Abbr
 		if expected != actual {
 			t.Errorf("Expected %s, got %s", expected, actual)
@@ -121,9 +121,9 @@ func TestGetNextPlayer(t *testing.T) {
 	var p *Player
 	var expectedNames []string
 
-	t.Logf("wrap = true");
+	t.Logf("wrap = true")
 	g = newGame()
-	expectedNames = []string {"Abel", "Baker", "Charlie", "Abel", "Baker", "Charlie"}
+	expectedNames = []string{"Abel", "Baker", "Charlie", "Abel", "Baker", "Charlie"}
 	for i, name := range expectedNames {
 		p = g.getNextPlayer(true)
 		if p.Name != name {
@@ -131,7 +131,7 @@ func TestGetNextPlayer(t *testing.T) {
 		}
 	}
 
-	t.Logf("wrap = false");
+	t.Logf("wrap = false")
 	g = newGame()
 	expectedNames = []string{"Abel", "Baker", "Charlie"}
 	for i, name := range expectedNames {

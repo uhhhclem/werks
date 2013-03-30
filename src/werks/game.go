@@ -27,8 +27,8 @@ type Game struct {
 	Phase        Phase            `json:"phase"`
 	Messages     Queue            `json:"-"`
 	LocoMap      map[string]*Loco `json:"-"`
-	TurnOrder	 	 PlayerQueue 			`json:"-"`
-	PhaseOrder	 PlayerQueue 			`json:"-"`
+	TurnOrder    PlayerQueue      `json:"-"`
+	PhaseOrder   PlayerQueue      `json:"-"`
 }
 
 // Player represents one of the players in the game.
@@ -96,7 +96,7 @@ var Phases = []string{
 // Actions represents the actions that are available to the
 // current player.
 type Actions struct {
-	Phase string `json:"phase"`
+	Phase   string   `json:"phase"`
 	Actions []Action `json:"actions"`
 }
 
@@ -105,14 +105,14 @@ type Action struct {
 	Abbr string `json:"abbr"`
 	Verb string `json:"verb"`
 	Noun string `json:"noun"`
-	Cost int `json:"cost"`
-	Loco *Loco `json:"-"`
+	Cost int    `json:"cost"`
+	Loco *Loco  `json:"-"`
 }
 
 // GameState represents the current state of the game, including the
 // currently available actions.
 type GameState struct {
-	Game *Game `json:"game"`
+	Game    *Game    `json:"game"`
 	Actions *Actions `json:"actions"`
 }
 
@@ -130,9 +130,9 @@ func (g *Game) findAction(abbr string) *Action {
 // control to the handler appropriate for the phase.
 func (g *Game) performAction(abbr string) {
 	m := make(map[Phase]func(*Action))
-	m[Development] = func(a *Action) { g.performDevelopmentAction(a)}
-	m[Capacity] = func(a *Action) { g.performCapacityAction(a)}
-	m[Production] = func(a *Action) { g.performProductionAction(a)}
+	m[Development] = func(a *Action) { g.performDevelopmentAction(a) }
+	m[Capacity] = func(a *Action) { g.performCapacityAction(a) }
+	m[Production] = func(a *Action) { g.performProductionAction(a) }
 
 	a := g.findAction(abbr)
 	if a == nil {
@@ -148,7 +148,7 @@ func (g *Game) performDevelopmentAction(a *Action) {
 	//   D = develop
 	if strings.HasPrefix(a.Abbr, "D") {
 		p := g.getCurrentPlayer()
-		f := Factory {Key: a.Loco.Key, Capacity: 1}
+		f := Factory{Key: a.Loco.Key, Capacity: 1}
 		p.Factories = append(p.Factories, f)
 		p.Money -= a.Loco.DevelopmentCost
 	}
@@ -191,7 +191,7 @@ func (g *Game) getActions() *Actions {
 
 	// I think you can always pass.
 	actions = append(actions, Action{Abbr: "P", Verb: "Pass"})
-	phase := Phases[g.Phase - 1]
+	phase := Phases[g.Phase-1]
 	return &Actions{Phase: phase, Actions: actions}
 }
 
@@ -244,7 +244,6 @@ func makeNewGame(name string, playerNames []string) *Game {
 
 	return g
 }
-
 
 // getNextPlayer returns the next player.  If wrap is false, each player
 // gets one turn, and this returns nil when all players have had a turn.
@@ -302,7 +301,7 @@ func (g *Game) initPlayers(names []string) {
 			Factories:    make([]Factory, 1),
 			Money:        12,
 			ChatMessages: Queue{Capacity: 500},
-			TurnOrder: 	  i}
+			TurnOrder:    i}
 
 		p.Factories[0] = Factory{Key: "p1", Capacity: 1}
 

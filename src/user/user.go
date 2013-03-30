@@ -18,20 +18,20 @@ var InvalidPasswordError = errors.New("Invalid password.")
 
 // Users is a persistable collection of users.
 type Users struct {
-  passwordSalt string
-  userFilename string
-  users []*User
-  usersByNickname map[string]*User
-  usersById map[string]*User
-  usersByToken map[string]*User
+	passwordSalt    string
+	userFilename    string
+	users           []*User
+	usersByNickname map[string]*User
+	usersById       map[string]*User
+	usersByToken    map[string]*User
 }
 
 // User is an individual user.
 type User struct {
-	Id string 	`json:"id"`
+	Id       string `json:"id"`
 	Nickname string `json:"nickname"`
-	Pwhash string `json:"pwhash"`
-	Token string `json:"-"`
+	Pwhash   string `json:"pwhash"`
+	Token    string `json:"-"`
 }
 
 // Init creates a new Users structure.
@@ -62,11 +62,10 @@ func (s *Users) Register(nickname string, password string) (*User, error) {
 		return nil, err
 	}
 
-
-	u := &User {
-		Id: id,
+	u := &User{
+		Id:       id,
 		Nickname: nickname,
-		Pwhash: s.hashPassword(canonicalizePassword(password))}
+		Pwhash:   s.hashPassword(canonicalizePassword(password))}
 
 	u.Token, err = uuid.GenUUID()
 	if err != nil {
@@ -180,8 +179,8 @@ func (s *Users) LoadUsers() error {
 		return err
 	}
 
-	s.usersByNickname = make(map[string] *User)
-	s.usersById = make(map[string] *User)
+	s.usersByNickname = make(map[string]*User)
+	s.usersById = make(map[string]*User)
 	for _, u := range s.users {
 		s.usersByNickname[canonicalizeNickname(u.Nickname)] = u
 		s.usersById[u.Id] = u

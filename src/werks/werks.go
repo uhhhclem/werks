@@ -136,12 +136,12 @@ func serveError(w http.ResponseWriter, e error) {
 }
 
 type LoginResponse struct {
-	Msg string `json:"msg"`
+	Msg   string `json:"msg"`
 	Token string `json:"token"`
 }
 
 func invalidUserResponse(msg string) []byte {
-	r := LoginResponse {Msg: msg}
+	r := LoginResponse{Msg: msg}
 	b, err := json.Marshal(r)
 	if err != nil {
 		panic(err)
@@ -174,7 +174,7 @@ func apiLoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // apiRegisterHandler registers a user
-func apiRegisterHandler (w http.ResponseWriter, r *http.Request) {
+func apiRegisterHandler(w http.ResponseWriter, r *http.Request) {
 	var responseJson []byte
 	var err error
 	var u *user.User
@@ -244,7 +244,7 @@ func apiActionHandler(w http.ResponseWriter, r *http.Request) {
 		actionsJson := g.getActionsJson()
 		w.Header().Add("content-type", "application/json")
 		fmt.Fprintf(w, "%s", actionsJson)
-		return;
+		return
 	}
 
 	if r.Method == "POST" {
@@ -259,7 +259,7 @@ func apiActionHandler(w http.ResponseWriter, r *http.Request) {
 		gameStateJson := g.getGameStateJson()
 		w.Header().Add("content-type", "application/json")
 		fmt.Fprintf(w, "%s", gameStateJson)
-		return;
+		return
 	}
 }
 

@@ -14,13 +14,13 @@ import (
 // State is the game's current state.  Actions contains a list of all of the
 // Actions that have been taken in the game, in order.
 type Game struct {
-	Id string
-	Name string
-	Players [] Player
-	Seed int
-	Actions[] Action
-	State GameState `json:"-"`
-	Engine GameEngine `json:"-"`
+	Id      string
+	Name    string
+	Players []Player
+	Seed    int
+	Actions []Action
+	State   GameState  `json:"-"`
+	Engine  GameEngine `json:"-"`
 }
 
 // Player indicates a player in one specific Game.  The Id uniquely identifies
@@ -32,10 +32,10 @@ type Game struct {
 // A GameEngine may (and probably will, though it's not required to) maintain
 // references to Players.  But it will never obtain a reference to the Game.
 type Player struct {
-	Id string
-	Name string
+	Id     string
+	Name   string
 	UserId string
-	Detail string
+	Detail *[]byte
 }
 
 // GameState indicates the game's current state.  Whenever the game changes state,
@@ -50,8 +50,8 @@ type Player struct {
 // where all of the pieces are, but it only supports three or four GameStates:
 // White's turn, Black's turn, and game over (or checkmate and stalemate).
 type GameState struct {
-	Outcome Event
-	ActingPlayer Player
+	Outcome          Event
+	ActingPlayer     Player
 	AvailableOptions []Option
 }
 
@@ -59,30 +59,30 @@ type GameState struct {
 // the option; if the user chooses that option, the Abbr will be used to determine how
 // to advance the game to the next state.  Text is a human-readable description of the
 // option that is used when the game is running in console mode.  Detail is a payload
-// of additional information sent along with the Option to the client, with the
+// of additional JSON-encoded data sent along with the Option to the client, with the
 // expectation that the client will use that information in the presentation.
 type Option struct {
-	Abbr string
-	Text string
-	Detail string
+	Abbr   string
+	Text   string
+	Detail *[]byte
 }
 
 // Action represents the action chosen by the user.  It will contain the Abbr of one
-// of the chosen Options, and may additionally contain a payload of related data in
-// the Detail.
+// of the chosen Options, and may additionally contain a payload of related JSON-encoded
+// data in the Detail.
 type Action struct {
-	Abbr string
-	Detail string
+	Abbr   string
+	Detail *[]byte
 }
 
 // Event represents an occurrence in the game that should be presented to one ore
 // more users.  Abbr identifies the type of Event, Text is a description of the Event
 // (which more likely to be logged than simply presented to the user), and Detail is
-// a payload of related data.
+// a payload of JSON-encoded related data.
 type Event struct {
-	Abbr string
-	Text string
-	Detail string
+	Abbr   string
+	Text   string
+	Detail *[]byte
 }
 
 // GameEngine contains the actual logic of the game.
@@ -111,7 +111,6 @@ type GameEngine interface {
 	// engines aren't the same type, or if their internal states are unequal.
 	Equals(e1 GameEngine) bool
 }
-
 
 // PlayToConsole allows testing and debugging of game engines without having to
 // build a UI.
@@ -202,7 +201,7 @@ func Serialize(g Game, w io.Writer) (n int, err error) {
 	return w.Write(b)
 }
 
-func Deserialize(r io.Reader, len int, g *Game) ( err error) {
+func Deserialize(r io.Reader, len int, g *Game) (err error) {
 	b := make([]byte, len)
 	_, err = r.Read(b)
 	if err != nil {

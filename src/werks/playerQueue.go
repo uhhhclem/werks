@@ -1,12 +1,11 @@
 package werks
 
-
 // PlayerInfo is a container for putting players into
 // the PlayerQueue.
 type PlayerInfo struct {
-	player *Player 	// the player we're keeping track of
-	turnOrder int		// the turn order in the previous turn
-	index int				// the index of the item in the heap
+	player    *Player // the player we're keeping track of
+	turnOrder int     // the turn order in the previous turn
+	index     int     // the index of the item in the heap
 }
 
 // PlayerQueue is a priority queue that orders players by

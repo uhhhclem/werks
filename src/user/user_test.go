@@ -32,8 +32,8 @@ func TestRegister(t *testing.T) {
 }
 
 func TestCanonicalizeNickname(t *testing.T) {
-	input := []string {"a b", "C!99;d", "EFGH_"}
-	expected := []string { "ab", "c99d", "efgh"}
+	input := []string{"a b", "C!99;d", "EFGH_"}
+	expected := []string{"ab", "c99d", "efgh"}
 	for i, _ := range input {
 		a := canonicalizeNickname(input[i])
 		e := expected[i]
@@ -44,8 +44,8 @@ func TestCanonicalizeNickname(t *testing.T) {
 }
 
 func TestCanonicalizePassword(t *testing.T) {
-	input := []string {"a b", "  C!99;d", "EF G H_ "}
-	expected := []string { "ab", "C!99;d", "EFGH_"}
+	input := []string{"a b", "  C!99;d", "EF G H_ "}
+	expected := []string{"ab", "C!99;d", "EFGH_"}
 	for i, _ := range input {
 		a := canonicalizePassword(input[i])
 		e := expected[i]
@@ -57,8 +57,8 @@ func TestCanonicalizePassword(t *testing.T) {
 }
 
 func TestLogin(t *testing.T) {
-	var nicknames = []string {"Alpha", "Beta", "Gamma", "Delta"}
-	var passwords = []string {"Epsilon", "Omicron", "Omega", "Upsilon"}
+	var nicknames = []string{"Alpha", "Beta", "Gamma", "Delta"}
+	var passwords = []string{"Epsilon", "Omicron", "Omega", "Upsilon"}
 
 	s := Init(salt, filename)
 
@@ -85,7 +85,7 @@ func TestLogin(t *testing.T) {
 
 	user, err = s.Login("  alpha  ", "Slipshod")
 	if user != nil {
-		t.Errorf("Login should have failed.");
+		t.Errorf("Login should have failed.")
 		return
 	}
 	if err != InvalidPasswordError {
@@ -95,7 +95,7 @@ func TestLogin(t *testing.T) {
 
 	user, err = s.Login("Bogus", "Slipshod")
 	if user != nil {
-		t.Errorf("Login should have failed.");
+		t.Errorf("Login should have failed.")
 		return
 	}
 	if err != InvalidNicknameError {
@@ -110,7 +110,7 @@ func TestLoginDoesntReassignToken(t *testing.T) {
 	var u *User
 
 	s := Init(salt, filename)
-	_, err = 	s.Register("foo", "bar")
+	_, err = s.Register("foo", "bar")
 
 	u, err = s.Login("foo", "bar")
 	if err != nil {
@@ -134,8 +134,8 @@ func TestLoginDoesntReassignToken(t *testing.T) {
 }
 
 func TestSaveAndLoad(t *testing.T) {
-	var nicknames = []string {"Alpha", "Beta", "Gamma", "Delta"}
-	var passwords = []string {"Epsilon", "Omicron", "Omega", "Upsilon"}
+	var nicknames = []string{"Alpha", "Beta", "Gamma", "Delta"}
+	var passwords = []string{"Epsilon", "Omicron", "Omega", "Upsilon"}
 
 	s := Init(salt, filename)
 

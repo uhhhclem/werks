@@ -42,7 +42,7 @@ func TestPop(t *testing.T) {
 		t.Logf("Item %d of queue is %s", i, pq[i].player.Name)
 	}
 
-	expectedOrder := []string {"Alpha", "Delta", "Beta", "Gamma"}
+	expectedOrder := []string{"Alpha", "Delta", "Beta", "Gamma"}
 	for i, expected := range expectedOrder {
 		pi := heap.Pop(&pq).(*PlayerInfo)
 		t.Logf("Popped %s", pi.player.Name)

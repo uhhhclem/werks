@@ -1,8 +1,8 @@
 package gamework
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 // makeAction finds the option matching abbr, and creates an Action
@@ -62,7 +62,7 @@ func TestSerializationAndDeserialization(t *testing.T) {
 
 	// If we serialize g1 to s1, s1 and s0 should be equal.
 	s1, err = WriteToString(g1)
-	if (s0 != s1) {
+	if s0 != s1 {
 		t.Errorf("Serialization failed.\n")
 		t.Errorf("s0 = %s", s0)
 		t.Errorf("s1 = %s", s1)
@@ -80,4 +80,3 @@ func TestSerializationAndDeserialization(t *testing.T) {
 		t.Errorf("\ng1.Engine.Debug() = \n%s", e1.Debug())
 	}
 }
-
