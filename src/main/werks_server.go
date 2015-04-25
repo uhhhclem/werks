@@ -4,5 +4,5 @@ import "werks"
 
 
 func main() {
-	werks.Serve(".")
+	werks.Serve("../..")
 }

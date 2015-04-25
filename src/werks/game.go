@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path/filepath"
 	"strings"
 	"uuid"
 )
@@ -351,7 +352,7 @@ func rollDie() Die {
 
 // loadLocos loads (and unmarshals) Locos from their JSON representation.
 func (g *Game) loadLocos() {
-	path := LocosJsonPath
+	path := filepath.Join(rootPath, LocosJsonPath)
 	result, err := ioutil.ReadFile(path)
 	if err != nil {
 		var pwd string
