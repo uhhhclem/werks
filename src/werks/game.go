@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gamework"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -533,3 +534,38 @@ func (g *Game) getPlayer(id string) (*Player, error) {
 }
 
 var Games = make(map[string]*Game)
+
+	// Start is used to initialize an instance of the engine for a new game.
+	// It is expected (though not required) that the engine will maintain its
+	// own copies of the game's ID, Name, and Players.  The seed is used to
+	// initialize the random number generator.
+func (g *Game) Start(
+		id string, name string, players []gamework.Player, seed int) gamework.GameState {
+
+}
+
+// HandleAction is used to handle an action taken by the active player;
+// it returns the game's new state.
+func (g *Game) HandleAction(action gamework.Action) gamework.GameState {
+
+}
+
+// RefreshClient is used to refresh the client with the game, typically
+// when the user hits F5 or reconnects to the server.  The string it returns
+// is a JSON payload that is sent to the client.
+func (g *Game) RefreshClient(playerId string) string {
+	return "RefreshClient: not implemented."
+}
+
+// Debug is another out-of-band interaction, used to dump debug information
+// to the console or browser.
+func (g *Game) Debug() string {
+	return "Debug:  not implemented."
+}
+
+// Equals is used primarily in testing:  it should return false if the two
+// engines aren't the same type, or if their internal states are unequal.
+func (g *Game) Equals(e gamework.GameEngine) bool {
+		g1 := e.(*Game)
+		return true
+}
